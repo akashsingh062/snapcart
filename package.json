@@ -9,8 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@better-auth/mongo-adapter": "^1.6.23",
     "axios": "^1.18.1",
     "bcryptjs": "^3.0.3",
+    "better-auth": "^1.6.23",
     "mongoose": "^9.7.3",
     "next": "16.2.9",
     "react": "19.2.4",
