@@ -12,7 +12,7 @@ export default function LogoutButton() {
     setLoading(true);
     try {
       await authClient.signOut();
-      router.push("/sign-in");
+      router.push("/auth/register");
       router.refresh();
     } catch (err) {
       console.error("Failed to sign out:", err);
