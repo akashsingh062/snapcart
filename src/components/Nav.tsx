@@ -6,6 +6,7 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { auth } from "@/lib/auth";
 
 interface IUser {
   _id?: string;

@@ -9,6 +9,7 @@ import UserDashboard from "@/components/UserDashboard";
 import AdminDashboard from "@/components/AdminDashboard";
 import DeliveryBoyDashboard from "@/components/DeliveryBoyDashboard";
 
+
 export default async function Home() {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -30,7 +31,7 @@ export default async function Home() {
     email: user.email,
     role: user.role,
     mobile: user.mobile,
-    image: user.image || undefined,
+    image: session?.user.image || undefined,
   };
 
   return (
