@@ -51,6 +51,7 @@ const Nav = ({ user }: { user: IUser }) => {
         fetchOptions: {
           onSuccess: () => {
             router.push("/auth/login");
+            router.refresh()
           },
         },
       });

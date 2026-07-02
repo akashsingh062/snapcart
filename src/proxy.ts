@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "./lib/auth";
 
 export default async function proxy(req: NextRequest) {
     const { pathname } = req.nextUrl;
@@ -21,6 +22,20 @@ export default async function proxy(req: NextRequest) {
     if (isPublicRoute && sessionToken && (pathname === "/auth/login" || pathname === "/auth/register")) {
         const homeUrl = new URL("/", req.url);
         return NextResponse.redirect(homeUrl);
+    }
+
+    const session = await auth.api.getSession({
+        headers: req.headers
+    })
+    const role = session?.user?.role
+    if (pathname.includes('admin') && role !== 'admin') {
+        return NextResponse.redirect(new URL("/unauthorized", req.url));
+    }
+    if (pathname.includes('user') && role !== 'user') {
+        return NextResponse.redirect(new URL("/unauthorized", req.url));
+    }
+    if (pathname.includes('dilevery') && role !== 'dileveryBoy') {
+        return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
 
     return NextResponse.next();
