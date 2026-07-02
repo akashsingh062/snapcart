@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
-import { ArrowLeft, Eye, EyeOff, Leaf, Lock, Mail, User } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Leaf, Lock, Mail, User, Phone } from "lucide-react";
 import { motion } from "motion/react";
 
 type propType = {
@@ -12,9 +12,12 @@ type propType = {
 
 const RegisterForm = ({ previousStep }: propType) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [mobile, setMobile] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -24,7 +27,7 @@ const RegisterForm = ({ previousStep }: propType) => {
     e.preventDefault();
     setError("");
 
-    if (!name || !email || !password) {
+    if (!name || !email || !password || !mobile) {
       setError("Please fill out all required fields.");
       return;
     }
@@ -41,14 +44,15 @@ const RegisterForm = ({ previousStep }: propType) => {
           email,
           password,
           name,
-          callbackURL: "/",
+          mobile,
+          callbackURL: callbackUrl,
         },
         {
           onRequest: (ctx: unknown) => {
             console.log("Making request...", ctx);
           },
           onSuccess: () => {
-            router.push("/");
+            router.push(callbackUrl);
             router.refresh();
           },
           onError: (ctx: { error: { message?: string } }) => {
@@ -62,7 +66,7 @@ const RegisterForm = ({ previousStep }: propType) => {
       } else {
         setSuccess(true);
         setTimeout(() => {
-          router.push("/");
+          router.push(callbackUrl);
           router.refresh();
         }, 1500);
       }
@@ -79,7 +83,7 @@ const RegisterForm = ({ previousStep }: propType) => {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: callbackUrl,
       });
     } catch (err) {
       console.error(err);
@@ -159,6 +163,19 @@ const RegisterForm = ({ previousStep }: propType) => {
             />
           </div>
 
+          {/* Your Mobile Number Input */}
+          <div className="relative">
+            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <input
+              type="tel"
+              required
+              placeholder="Mobile Number"
+              value={mobile}
+              onChange={(e) => setMobile(e.target.value)}
+              className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-green-600 transition-all text-base"
+            />
+          </div>
+
           {/* Your Password Input */}
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -181,7 +198,7 @@ const RegisterForm = ({ previousStep }: propType) => {
 
           {/* Register CTA Button */}
           {(() => {
-            const formValidation = name !== "" && email !== "" && password !== "";
+            const formValidation = name !== "" && email !== "" && password !== "" && mobile !== "";
             return (
               <button
                 type="submit"
@@ -256,7 +273,7 @@ const RegisterForm = ({ previousStep }: propType) => {
           <p className="text-sm text-slate-500">
             Already have an account?{" "}
             <Link
-              href="/auth/login"
+              href={`/auth/login${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
               className="font-bold text-green-600 hover:text-green-700 inline-flex items-center gap-1 transition-colors ml-1"
             >
               <svg

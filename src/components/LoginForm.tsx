@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { ArrowLeft, Eye, EyeOff, Leaf, Lock, Mail } from "lucide-react";
@@ -12,6 +12,8 @@ type propType = {
 
 const LoginForm = ({ previousStep }: propType) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -41,7 +43,7 @@ const LoginForm = ({ previousStep }: propType) => {
             console.log("Making request...", ctx);
           },
           onSuccess: () => {
-            router.push("/");
+            router.push(callbackUrl);
             router.refresh();
           },
           onError: (ctx: { error: { message?: string } }) => {
@@ -55,7 +57,7 @@ const LoginForm = ({ previousStep }: propType) => {
       } else {
         setSuccess(true);
         setTimeout(() => {
-          router.push("/");
+          router.push(callbackUrl);
           router.refresh();
         }, 1500);
       }
@@ -72,7 +74,7 @@ const LoginForm = ({ previousStep }: propType) => {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: callbackUrl,
       });
     } catch (err) {
       console.error(err);
@@ -236,7 +238,7 @@ const LoginForm = ({ previousStep }: propType) => {
           <p className="text-sm text-slate-500">
             Don&apos;t have an account?{" "}
             <Link
-              href="/auth/register"
+              href={`/auth/register${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
               className="font-bold text-green-600 hover:text-green-700 inline-flex items-center gap-1 transition-colors ml-1"
             >
               <svg
