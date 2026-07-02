@@ -13,6 +13,7 @@
     "axios": "^1.18.1",
     "bcryptjs": "^3.0.3",
     "better-auth": "^1.6.23",
+    "cloudinary": "^2.10.0",
     "lucide-react": "^1.22.0",
     "mongoose": "^9.7.3",
     "motion": "^12.42.2",
