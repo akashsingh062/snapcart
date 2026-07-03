@@ -9,7 +9,6 @@ import UserDashboard from "@/components/UserDashboard";
 import AdminDashboard from "@/components/AdminDashboard";
 import DeliveryBoyDashboard from "@/components/DeliveryBoyDashboard";
 
-
 export default async function Home() {
   const session = await auth.api.getSession({
     headers: await headers(),

@@ -3,7 +3,16 @@ import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
-import { ArrowLeft, Eye, EyeOff, Leaf, Lock, Mail, User, Phone } from "lucide-react";
+import {
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  Leaf,
+  Lock,
+  Mail,
+  User,
+  Phone,
+} from "lucide-react";
 import { motion } from "motion/react";
 
 type propType = {
@@ -17,7 +26,6 @@ const RegisterForm = ({ previousStep }: propType) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mobile, setMobile] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -27,7 +35,7 @@ const RegisterForm = ({ previousStep }: propType) => {
     e.preventDefault();
     setError("");
 
-    if (!name || !email || !password || !mobile) {
+    if (!name || !email || !password) {
       setError("Please fill out all required fields.");
       return;
     }
@@ -44,7 +52,6 @@ const RegisterForm = ({ previousStep }: propType) => {
           email,
           password,
           name,
-          mobile,
           callbackURL: callbackUrl,
         },
         {
@@ -89,7 +96,6 @@ const RegisterForm = ({ previousStep }: propType) => {
       console.error(err);
     }
   };
-
 
   return (
     <div className="min-h-screen flex flex-col justify-center p-6 bg-white font-sans text-slate-800 relative">
@@ -163,19 +169,6 @@ const RegisterForm = ({ previousStep }: propType) => {
             />
           </div>
 
-          {/* Your Mobile Number Input */}
-          <div className="relative">
-            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
-            <input
-              type="tel"
-              required
-              placeholder="Mobile Number"
-              value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 bg-white border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-green-600 transition-all text-base"
-            />
-          </div>
-
           {/* Your Password Input */}
           <div className="relative">
             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -192,13 +185,18 @@ const RegisterForm = ({ previousStep }: propType) => {
               onClick={() => setShowPassword((pre) => !pre)}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
             >
-              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              {showPassword ? (
+                <EyeOff className="w-5 h-5" />
+              ) : (
+                <Eye className="w-5 h-5" />
+              )}
             </button>
           </div>
 
           {/* Register CTA Button */}
           {(() => {
-            const formValidation = name !== "" && email !== "" && password !== "" && mobile !== "";
+            const formValidation =
+              name !== "" && email !== "" && password !== "";
             return (
               <button
                 type="submit"
@@ -216,8 +214,19 @@ const RegisterForm = ({ previousStep }: propType) => {
                     fill="none"
                     viewBox="0 0 24 24"
                   >
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                 )}
                 Register
@@ -284,8 +293,16 @@ const RegisterForm = ({ previousStep }: propType) => {
                 viewBox="0 0 24 24"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10 17l5-5m0 0l-5-5m5 5H3" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M10 17l5-5m0 0l-5-5m5 5H3"
+                />
               </svg>
               Login
             </Link>

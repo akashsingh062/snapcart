@@ -1,9 +1,13 @@
-import React from 'react'
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import React from "react";
 
-const AdminDashboard = () => {
-  return (
-    <div>AdminDashboard</div>
-  )
-}
+const AdminDashboard = async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  console.log(session);
+  return <div>AdminDashboard</div>;
+};
 
-export default AdminDashboard
+export default AdminDashboard;
