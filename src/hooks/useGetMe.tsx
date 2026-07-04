@@ -10,7 +10,6 @@ function useGetMe() {
   useEffect(() => {
     const getMe = async () => {
       const result = await axios.get("/api/auth/me");
-      console.log(result.data.user)
       dispatch(setUserData(result.data.user))
     };
     getMe();

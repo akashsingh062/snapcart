@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import React, { useEffect, useState } from 'react'
 
 const HeroSection = () => {
+    
     const slides = [
         {
             id:1,
