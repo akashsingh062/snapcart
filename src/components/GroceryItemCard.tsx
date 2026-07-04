@@ -2,7 +2,7 @@
 import React from 'react'
 import Image from 'next/image'
 import { motion } from 'motion/react'
-import { Plus } from 'lucide-react'
+import { Plus, PlusCircle } from 'lucide-react'
 
 export interface IGrocery {
   _id?: string;
@@ -64,12 +64,14 @@ const GroceryItemCard = ({item}: {item: IGrocery}) => {
           </span>
         </div>
         
-        <button
+        <motion.button
+          whileTap={{scale:0.95}}
+          transition={{duration:0.2}}
           className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-600 border border-emerald-100/50 hover:border-emerald-600 text-emerald-600 hover:text-white text-xs sm:text-sm font-semibold rounded-xl transition-all duration-200 active:scale-95 shadow-2xs hover:shadow-sm cursor-pointer"
         >
-          <Plus className="w-4 h-4" />
+          <PlusCircle className="w-4 h-4" />
           <span>Add</span>
-        </button>
+        </motion.button>
       </div>
     </motion.div>
   )
