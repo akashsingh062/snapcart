@@ -18,6 +18,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { createPortal } from "react-dom";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 interface IUser {
   _id?: string;
@@ -36,6 +38,7 @@ const Nav = ({ user }: { user: IUser }) => {
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const {cartData} = useSelector((state:RootState)=>state.cart)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -263,12 +266,12 @@ const Nav = ({ user }: { user: IUser }) => {
             </div>
 
             <Link
-              href={"/"}
+              href={"/user/cart"}
               className="relative bg-white rounded-full w-11 h-11 flex items-center justify-center shadow-md hover:scale-105 transition"
             >
               <ShoppingCart className="text-green-600 w-6 h-6" />
               <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold shadow">
-                8
+                {cartData.length}
               </span>
             </Link>
           </>

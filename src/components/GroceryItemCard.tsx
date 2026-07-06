@@ -2,7 +2,10 @@
 import React from 'react'
 import Image from 'next/image'
 import { motion } from 'motion/react'
-import { Plus, PlusCircle } from 'lucide-react'
+import { MinusCircle, PlusCircle } from 'lucide-react'
+import { useDispatch, useSelector } from 'react-redux'
+import { AppDispatch, RootState } from '@/redux/store'
+import { addToCart, updateQuantity } from '@/redux/cartSlice'
 
 export interface IGrocery {
   _id?: string;
@@ -16,6 +19,10 @@ export interface IGrocery {
 }
 
 const GroceryItemCard = ({item}: {item: IGrocery}) => {
+  const dispatch = useDispatch<AppDispatch>()
+  const {cartData} = useSelector((state:RootState)=>state.cart)
+  const cartItems = cartData.find(i=>i._id===item._id)
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 30, scale: 0.95 }}
@@ -63,15 +70,50 @@ const GroceryItemCard = ({item}: {item: IGrocery}) => {
             ₹{item.price}
           </span>
         </div>
-        
+        {cartItems ? (
+          <motion.div 
+          initial={{opacity:0,scale:0.5}}
+          animate={{opacity:1,scale:1}}
+          whileTap={{scale:0.95}}
+          transition={{duration:0.2}}
+          className='flex items-center gap-2'>
+            <motion.button
+            whileTap={{scale:0.95}}
+            transition={{duration:0.2}}
+            className='flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white transition-all duration-200 active:scale-95 shadow-2xs hover:shadow-sm cursor-pointer'
+            onClick={() => {
+              if (item._id) {
+                dispatch(updateQuantity({ _id: item._id, quantity: cartItems.quantity - 1 }))
+              }
+            }}
+            >
+              <MinusCircle className='w-4 h-4' />
+            </motion.button>
+            <p className='text-center text-sm font-semibold text-slate-800 w-8'>{cartItems.quantity}</p>
+            <motion.button
+            whileTap={{scale:0.95}}
+            transition={{duration:0.2}}
+            className='flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 hover:bg-emerald-600 text-emerald-600 hover:text-white transition-all duration-200 active:scale-95 shadow-2xs hover:shadow-sm cursor-pointer'
+            onClick={() => {
+              if (item._id) {
+                dispatch(updateQuantity({ _id: item._id, quantity: cartItems.quantity + 1 }))
+              }
+            }}
+            >
+              <PlusCircle className='w-4 h-4' />
+            </motion.button>
+          </motion.div>
+        ):(
         <motion.button
           whileTap={{scale:0.95}}
           transition={{duration:0.2}}
           className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-600 border border-emerald-100/50 hover:border-emerald-600 text-emerald-600 hover:text-white text-xs sm:text-sm font-semibold rounded-xl transition-all duration-200 active:scale-95 shadow-2xs hover:shadow-sm cursor-pointer"
+          onClick={()=>dispatch(addToCart({...item, quantity:1}))}
         >
           <PlusCircle className="w-4 h-4" />
           <span>Add</span>
         </motion.button>
+        )}
       </div>
     </motion.div>
   )
