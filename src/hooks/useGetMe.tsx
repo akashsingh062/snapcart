@@ -9,8 +9,12 @@ function useGetMe() {
     const dispatch = useDispatch<AppDispatch>()
   useEffect(() => {
     const getMe = async () => {
-      const result = await axios.get("/api/auth/me");
-      dispatch(setUserData(result.data.user))
+      try {
+        const result = await axios.get("/api/auth/me");
+        dispatch(setUserData(result.data.user));
+      } catch (error) {
+        console.error("Failed to fetch user session:", error);
+      }
     };
     getMe();
   }, [dispatch]);
