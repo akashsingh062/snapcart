@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AnimatePresence, motion } from "motion/react";
 import Image from "next/image";
@@ -14,7 +14,6 @@ import {
   Plus, 
   ShoppingBag, 
   ArrowRight,
-  CheckCircle2,
   ReceiptText,
   ShieldCheck,
   Truck
@@ -26,7 +25,6 @@ const CartPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { cartData } = useSelector((state: RootState) => state.cart);
-  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
 
   const handleQtyUpdate = (id: string, newQty: number) => {
     dispatch(updateQuantity({ _id: id, quantity: newQty }));
@@ -34,20 +32,6 @@ const CartPage = () => {
 
   const handleRemove = (id: string) => {
     dispatch(removeFromCart(id));
-  };
-
-  const handleCheckout = () => {
-    setCheckoutSuccess(true);
-  };
-
-  const handleCheckoutComplete = () => {
-    cartData.forEach((item) => {
-      if (item._id) {
-        dispatch(removeFromCart(item._id));
-      }
-    });
-    setCheckoutSuccess(false);
-    router.push("/");
   };
 
   // Calculations
@@ -303,7 +287,7 @@ const CartPage = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={handleCheckout}
+                onClick={()=>router.push("/user/checkout")}
                 className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-emerald-600/20 transition duration-200 cursor-pointer flex items-center justify-center gap-2 group"
               >
                 <span>Checkout Now</span>
@@ -319,89 +303,6 @@ const CartPage = () => {
           </motion.div>
         </div>
       )}
-
-      {/* Checkout Success Modal */}
-      <AnimatePresence>
-        {checkoutSuccess && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 30 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 30 }}
-              transition={{ type: "spring", duration: 0.5 }}
-              className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl text-center border border-slate-100 flex flex-col items-center"
-            >
-              <div className="relative mb-6">
-                {/* Glow Ring */}
-                <motion.div
-                  animate={{ scale: [1, 1.15, 1], opacity: [0.4, 0.7, 0.4] }}
-                  transition={{ repeat: Infinity, duration: 2 }}
-                  className="absolute inset-0 bg-emerald-200 rounded-full blur-xl"
-                />
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
-                  className="relative bg-emerald-500 text-white w-20 h-20 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/30"
-                >
-                  <CheckCircle2 className="w-10 h-10" />
-                </motion.div>
-              </div>
-
-              <motion.h3
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-2xl font-black text-slate-900 mb-2"
-              >
-                Order Placed Successfully!
-              </motion.h3>
-
-              <motion.p
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-slate-500 text-sm sm:text-base mb-6 leading-relaxed"
-              >
-                Thank you for ordering from <span className="font-semibold text-emerald-600">Snapcart</span>. 
-                Your groceries are being handpicked and will reach your doorstep in less than <span className="font-semibold text-emerald-600">10 minutes</span>!
-              </motion.p>
-
-              {/* Order total info badge */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="bg-slate-50 border border-slate-100 rounded-2xl p-4 w-full mb-6 flex justify-between items-center text-sm"
-              >
-                <div className="text-left">
-                  <span className="text-slate-400 block text-xs">Estimated Delivery</span>
-                  <span className="text-slate-700 font-semibold">⚡ 9 mins</span>
-                </div>
-                <div className="text-right">
-                  <span className="text-slate-400 block text-xs">Total Amount paid</span>
-                  <span className="text-emerald-600 font-extrabold text-lg">₹{totalToPay.toFixed(2)}</span>
-                </div>
-              </motion.div>
-
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleCheckoutComplete}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-emerald-600/20 transition duration-200 cursor-pointer flex items-center justify-center gap-2"
-              >
-                <span>Continue Shopping</span>
-                <ArrowRight className="w-5 h-5" />
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 };

@@ -3,10 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import { IGrocery } from "@/components/GroceryItemCard";
 
 export interface ICartItem extends IGrocery {
-  quantity:number,
-  subTotal: number,
-  deliveryFee: number,
-  finalTotal: number
+  quantity: number;
 }
 interface ICartSlice {
   cartData: ICartItem[],
