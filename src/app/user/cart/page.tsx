@@ -20,7 +20,7 @@ import {
   Truck
 } from "lucide-react";
 import { RootState, AppDispatch } from "@/redux/store";
-import { removeFromCart, updateQuantity } from "@/redux/cartSlice";
+import { removeFromCart, updateQuantity, ICartItem } from "@/redux/cartSlice";
 
 const CartPage = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -140,7 +140,7 @@ const CartPage = () => {
           {/* Cart Items List */}
           <div className="lg:col-span-2 space-y-4">
             <AnimatePresence mode="popLayout">
-              {cartData.map((item: any) => (
+              {cartData.map((item: ICartItem) => (
                 <motion.div
                   key={item._id}
                   layout
@@ -162,7 +162,7 @@ const CartPage = () => {
                 >
                   <div className="flex items-center gap-4 flex-1">
                     {/* Product Image */}
-                    <div className="relative w-20 h-20 bg-slate-50 border border-slate-100 rounded-xl overflow-hidden flex-shrink-0 flex items-center justify-center">
+                    <div className="relative w-20 h-20 bg-slate-50 border border-slate-100 rounded-xl overflow-hidden shrink-0 flex items-center justify-center">
                       <Image
                         src={item.image}
                         alt={item.name}
@@ -189,10 +189,10 @@ const CartPage = () => {
                   {/* Pricing, Quantity Controls, Remove button */}
                   <div className="flex items-center justify-between sm:justify-end gap-4 sm:gap-6 border-t border-slate-50 pt-4 sm:pt-0 sm:border-none">
                     {/* Item Price */}
-                    <div className="flex flex-col text-left sm:text-right min-w-[70px]">
+                    <div className="flex flex-col text-left sm:text-right min-w-17.5">
                       <span className="text-[10px] text-slate-400 font-medium">Subtotal</span>
                       <span className="text-base font-extrabold text-slate-900">
-                        ₹{Number(item.price * item.quantity).toFixed(2)}
+                        ₹{(Number(item.price) * item.quantity).toFixed(2)}
                       </span>
                       {item.quantity > 1 && (
                         <span className="text-[10px] text-slate-400">
@@ -205,7 +205,7 @@ const CartPage = () => {
                     <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-xl p-1">
                       <motion.button
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => handleQtyUpdate(item._id, item.quantity - 1)}
+                        onClick={() => item._id && handleQtyUpdate(item._id, item.quantity - 1)}
                         className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-600 hover:text-emerald-600 hover:border-emerald-200 transition-colors cursor-pointer active:scale-95"
                       >
                         <Minus className="w-3.5 h-3.5" />
@@ -215,7 +215,7 @@ const CartPage = () => {
                       </span>
                       <motion.button
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => handleQtyUpdate(item._id, item.quantity + 1)}
+                        onClick={() => item._id && handleQtyUpdate(item._id, item.quantity + 1)}
                         className="w-8 h-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-600 hover:text-emerald-600 hover:border-emerald-200 transition-colors cursor-pointer active:scale-95"
                       >
                         <Plus className="w-3.5 h-3.5" />
@@ -226,7 +226,7 @@ const CartPage = () => {
                     <motion.button
                       whileHover={{ scale: 1.1, color: "#ef4444" }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => handleRemove(item._id)}
+                      onClick={() => item._id && handleRemove(item._id)}
                       className="text-slate-400 hover:text-red-500 transition-colors cursor-pointer p-2 hover:bg-red-50 rounded-xl"
                       title="Remove item"
                     >
@@ -313,7 +313,7 @@ const CartPage = () => {
 
             {/* Badges / Safe Checkout */}
             <div className="flex items-center justify-center gap-2 text-xs text-slate-400 px-4">
-              <ShieldCheck className="w-4 h-4 text-slate-300 flex-shrink-0" />
+              <ShieldCheck className="w-4 h-4 text-slate-300 shrink-0" />
               <span>Safe and Secure Payments. 100% Authentic products.</span>
             </div>
           </motion.div>
