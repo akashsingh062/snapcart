@@ -57,3 +57,36 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function GET() {
+  try {
+    await connectDb();
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const user = await User.findOne({ email: session.user?.email });
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    const orders = await Order.find({ user: user._id }).sort({ createdAt: -1 });
+
+    return NextResponse.json({ orders }, { status: 200 });
+  } catch (error) {
+    console.log(error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
+  }
+}
