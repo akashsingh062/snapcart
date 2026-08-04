@@ -16,7 +16,41 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import dynamic from "next/dynamic";
 
-const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
+import {
+  MapContainer as RLMapContainer,
+  TileLayer as RLTileLayer,
+  Marker as RLMarker,
+  Popup as RLPopup,
+  useMap,
+} from "react-leaflet";
+import * as L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const MapContainer = RLMapContainer as any;
+const TileLayer = RLTileLayer as any;
+const Marker = RLMarker as any;
+const Popup = RLPopup as any;
+
+// Fix Leaflet marker icon 404 error in Next.js
+const customIcon = new (L as any).Icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+function RecenterMap({ location }: { location: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(location, 14);
+  }, [location, map]);
+  return null;
+}
 
 const Checkout = () => {
   const router = useRouter();
@@ -46,23 +80,25 @@ const Checkout = () => {
             pincode: prev.pincode || data.postal || "",
           }));
         } else {
-          setPosition([28.6139, 77.2090]);
+          setPosition([28.6139, 77.209]);
         }
       } catch {
-        setPosition([28.6139, 77.2090]);
+        setPosition([28.6139, 77.209]);
       }
     };
-
     if (typeof window !== "undefined" && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           setPosition([pos.coords.latitude, pos.coords.longitude]);
         },
         (error) => {
-          console.warn("Browser geolocation failed/denied, using IP fallback:", error.message);
+          console.warn(
+            "Browser geolocation failed/denied, using IP fallback:",
+            error.message,
+          );
           fetchIpFallback();
         },
-        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
       );
     } else {
       fetchIpFallback();
@@ -73,7 +109,10 @@ const Checkout = () => {
     if (userData) {
       const timer = setTimeout(() => {
         setAddress((prev) => {
-          if (prev.fullName === (userData.name || "") && prev.mobile === (userData.mobile || "")) {
+          if (
+            prev.fullName === (userData.name || "") &&
+            prev.mobile === (userData.mobile || "")
+          ) {
             return prev;
           }
           return {
@@ -119,7 +158,10 @@ const Checkout = () => {
           </h2>
           <div className="space-y-4">
             <div className="relative">
-              <User size={18} className="absolute left-3 top-3 text-green-600" />
+              <User
+                size={18}
+                className="absolute left-3 top-3 text-green-600"
+              />
               <input
                 type="text"
                 value={address.fullName}
@@ -130,7 +172,10 @@ const Checkout = () => {
               />
             </div>
             <div className="relative">
-              <Phone size={18} className="absolute left-3 top-3 text-green-600" />
+              <Phone
+                size={18}
+                className="absolute left-3 top-3 text-green-600"
+              />
               <input
                 type="text"
                 value={address.mobile}
@@ -141,20 +186,29 @@ const Checkout = () => {
               />
             </div>
             <div className="relative">
-              <Home size={18} className="absolute left-3 top-3 text-green-600" />
+              <Home
+                size={18}
+                className="absolute left-3 top-3 text-green-600"
+              />
               <input
                 type="text"
                 placeholder="Full Address"
                 value={address.fullAddress}
                 onChange={(e) =>
-                  setAddress((prev) => ({ ...prev, fullAddress: e.target.value }))
+                  setAddress((prev) => ({
+                    ...prev,
+                    fullAddress: e.target.value,
+                  }))
                 }
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500"
               />
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="relative">
-                <Building size={18} className="absolute left-3 top-3 text-green-600" />
+                <Building
+                  size={18}
+                  className="absolute left-3 top-3 text-green-600"
+                />
                 <input
                   type="text"
                   placeholder="City"
@@ -166,7 +220,10 @@ const Checkout = () => {
                 />
               </div>
               <div className="relative">
-                <Navigation size={18} className="absolute left-3 top-3 text-green-600" />
+                <Navigation
+                  size={18}
+                  className="absolute left-3 top-3 text-green-600"
+                />
                 <input
                   type="text"
                   placeholder="State"
@@ -178,7 +235,10 @@ const Checkout = () => {
                 />
               </div>
               <div className="relative">
-                <PinIcon size={18} className="absolute left-3 top-3 text-green-600" />
+                <PinIcon
+                  size={18}
+                  className="absolute left-3 top-3 text-green-600"
+                />
                 <input
                   type="text"
                   placeholder="Pincode"
@@ -203,7 +263,25 @@ const Checkout = () => {
             </div>
 
             <div className="relative mt-6 h-80 rounded-xl overflow-hidden border border-gray-200 shadow-inner">
-              <MapView position={position} />
+              <MapContainer
+                center={position}
+                zoom={13}
+                scrollWheelZoom={true}
+                className="h-full w-full"
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {position && (
+                  <>
+                    <RecenterMap location={position} />
+                    <Marker position={position} icon={customIcon} draggable={true}>
+                      <Popup>Your delivery location </Popup>
+                    </Marker>
+                  </>
+                )}
+              </MapContainer>
             </div>
           </div>
         </motion.div>
