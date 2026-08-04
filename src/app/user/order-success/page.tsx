@@ -5,7 +5,6 @@ import { motion } from "motion/react";
 import {
   ArrowRight,
   CheckCircle,
-  CheckCircle2,
   Home,
   PackageCheck,
   ShieldCheck,
@@ -109,7 +108,7 @@ const OrderSuccess = () => {
           </Link>
 
           <button
-            onClick={() => router.push("/myorders")}
+            onClick={() => router.push("/user/my-orders")}
             className="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold py-3 px-6 rounded-2xl border border-gray-200 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer text-sm"
           >
             <Home size={16} />
