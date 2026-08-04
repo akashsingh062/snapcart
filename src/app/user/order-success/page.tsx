@@ -109,11 +109,11 @@ const OrderSuccess = () => {
           </Link>
 
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/myorders")}
             className="w-full bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold py-3 px-6 rounded-2xl border border-gray-200 transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer text-sm"
           >
             <Home size={16} />
-            <span>Return to Home</span>
+            <span>Go to My Orders</span>
           </button>
         </motion.div>
 
