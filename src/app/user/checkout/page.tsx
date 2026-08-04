@@ -21,10 +21,11 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
-import { ICartItem } from "@/redux/cartSlice";
+import { emptyCart, ICartItem } from "@/redux/cartSlice";
 import dynamic from "next/dynamic";
+import axios from "axios";
 
 const CheckoutMap = dynamic(() => import("./CheckoutMap"), {
   ssr: false,
@@ -37,9 +38,10 @@ const CheckoutMap = dynamic(() => import("./CheckoutMap"), {
 
 const Checkout = () => {
   const router = useRouter();
+  const dispatch = useDispatch();
   const { userData } = useSelector((state: RootState) => state.user);
   const { cartData, subTotal, deliveryFee, finalTotal } = useSelector(
-    (state: RootState) => state.cart,
+    (state: RootState) => state.cart
   );
   const cartItems = cartData;
   const [address, setAddress] = useState({
@@ -53,7 +55,7 @@ const Checkout = () => {
   });
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<"card" | "upi" | "cod">(
-    "cod",
+    "cod"
   );
 
   useEffect(() => {
@@ -84,11 +86,11 @@ const Checkout = () => {
         (error) => {
           console.warn(
             "Browser geolocation failed/denied, using IP fallback:",
-            error.message,
+            error.message
           );
           fetchIpFallback();
         },
-        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
       );
     } else {
       fetchIpFallback();
@@ -158,8 +160,15 @@ const Checkout = () => {
   };
 
   const handlePlaceOrder = async () => {
-    if (!address.fullName.trim() || !address.mobile.trim() || !address.fullAddress.trim()) {
-      alert("Please fill in your delivery details (Full Name, Mobile Number, Address).");
+    if (
+      !address.fullName.trim() ||
+      !address.mobile.trim() ||
+      !address.fullAddress.trim() ||
+      !address.city.trim() ||
+      !address.state.trim() ||
+      !address.pincode.trim()
+    ) {
+      alert("Please fill in all delivery details (Name, Mobile, Address, City, State, Pincode).");
       return;
     }
     if (cartItems.length === 0) {
@@ -169,11 +178,43 @@ const Checkout = () => {
 
     setIsPlacingOrder(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      alert(`Order placed successfully via ${paymentMethod.toUpperCase()}! Total: ₹${finalTotal}`);
-      router.push("/");
-    } catch (error) {
+      const orderPayload = {
+        items: cartItems.map((item: ICartItem) => ({
+          grocery: item._id,
+          name: item.name,
+          price: String(item.price),
+          unit: item.unit || "unit",
+          image: item.image,
+          quantity: item.quantity,
+        })),
+        totalAmount: String(finalTotal),
+        paymentMethod: paymentMethod === "cod" ? "cod" : "online",
+        address: {
+          fullName: address.fullName,
+          mobile: address.mobile,
+          city: address.city,
+          state: address.state,
+          pincode: address.pincode,
+          fullAddress: address.fullAddress,
+          latitude: position ? position[0] : 0,
+          longitude: position ? position[1] : 0,
+        },
+      };
+
+      const res = await axios.post("/api/auth/user/order", orderPayload);
+      if (res.status === 200 || res.data?.order) {
+        dispatch(emptyCart());
+        router.push("/user/order-success");
+      } else {
+        alert(res.data?.error || "Failed to place order.");
+      }
+    } catch (error: unknown) {
       console.error("Order placement failed:", error);
+      let errorMessage = "Failed to place order. Please try again.";
+      if (axios.isAxiosError(error) && error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      alert(errorMessage);
     } finally {
       setIsPlacingOrder(false);
     }
