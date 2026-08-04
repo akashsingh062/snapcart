@@ -14,7 +14,6 @@ import {
   Navigation,
   Phone,
   PinIcon,
-  QrCode,
   ShieldCheck,
   ShoppingCart,
   User,
@@ -54,7 +53,7 @@ const Checkout = () => {
     fullAddress: "",
   });
   const [position, setPosition] = useState<[number, number] | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"card" | "upi" | "cod">(
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "cod">(
     "cod"
   );
 
@@ -159,6 +158,16 @@ const Checkout = () => {
     }
   };
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("success") === "true") {
+        dispatch(emptyCart());
+        router.push("/user/order-success");
+      }
+    }
+  }, [dispatch, router]);
+
   const handlePlaceOrder = async () => {
     if (
       !address.fullName.trim() ||
@@ -201,12 +210,23 @@ const Checkout = () => {
         },
       };
 
-      const res = await axios.post("/api/auth/user/order", orderPayload);
-      if (res.status === 200 || res.data?.order) {
-        dispatch(emptyCart());
-        router.push("/user/order-success");
+      if (paymentMethod === "card") {
+        const res = await axios.post("/api/auth/user/payment", orderPayload);
+        if (res.data?.sessionUrl) {
+          window.location.href = res.data.sessionUrl;
+        } else {
+          alert(res.data?.error || "Failed to initiate online payment.");
+          setIsPlacingOrder(false);
+        }
       } else {
-        alert(res.data?.error || "Failed to place order.");
+        const res = await axios.post("/api/auth/user/order", orderPayload);
+        if (res.status === 200 || res.data?.order) {
+          dispatch(emptyCart());
+          router.push("/user/order-success");
+        } else {
+          alert(res.data?.error || "Failed to place order.");
+          setIsPlacingOrder(false);
+        }
       }
     } catch (error: unknown) {
       console.error("Order placement failed:", error);
@@ -215,7 +235,6 @@ const Checkout = () => {
         errorMessage = error.response.data.error;
       }
       alert(errorMessage);
-    } finally {
       setIsPlacingOrder(false);
     }
   };
@@ -564,45 +583,6 @@ const Checkout = () => {
                 </div>
               </div>
 
-              {/* UPI Option */}
-              <div
-                onClick={() => setPaymentMethod("upi")}
-                className={`relative p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer flex items-center gap-4 ${
-                  paymentMethod === "upi"
-                    ? "border-purple-600 bg-purple-50 ring-2 ring-purple-500/20 shadow-sm"
-                    : "border-gray-200 bg-white hover:border-purple-200 hover:bg-gray-50"
-                }`}
-              >
-                <div
-                  className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                    paymentMethod === "upi"
-                      ? "bg-purple-600 text-white"
-                      : "bg-gray-100 text-gray-500"
-                  }`}
-                >
-                  <QrCode size={22} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-gray-900 text-sm">
-                      UPI Payment
-                    </h3>
-                    <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
-                        paymentMethod === "upi"
-                          ? "bg-purple-600 text-white"
-                          : "border-2 border-gray-300"
-                      }`}
-                    >
-                      {paymentMethod === "upi" && <CheckCircle2 size={14} />}
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Google Pay, PhonePe, Paytm, BHIM
-                  </p>
-                </div>
-              </div>
-
               {/* Cash on Delivery (COD) Option */}
               <div
                 onClick={() => setPaymentMethod("cod")}
@@ -637,7 +617,7 @@ const Checkout = () => {
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Pay with cash or UPI at delivery
+                    Pay with cash or card at delivery
                   </p>
                 </div>
               </div>
@@ -652,8 +632,6 @@ const Checkout = () => {
                 className={`w-full mt-6 py-4 px-6 rounded-2xl font-bold text-white shadow-lg transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${
                   paymentMethod === "card"
                     ? "bg-blue-600 hover:bg-blue-700 shadow-blue-200"
-                    : paymentMethod === "upi"
-                    ? "bg-purple-600 hover:bg-purple-700 shadow-purple-200"
                     : "bg-green-700 hover:bg-green-800 shadow-green-200"
                 }`}
               >
@@ -667,8 +645,6 @@ const Checkout = () => {
                     ? "Processing Order..."
                     : paymentMethod === "card"
                     ? `Pay ₹${finalTotal} with Card`
-                    : paymentMethod === "upi"
-                    ? `Pay ₹${finalTotal} via UPI`
                     : `Place Order • ₹${finalTotal} (COD)`}
                 </span>
               </motion.button>
