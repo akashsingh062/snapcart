@@ -143,7 +143,7 @@ const Nav = ({ user }: { user: IUser }) => {
                   <div className="py-6 flex flex-col gap-2">
                     {user.role === "user" && (
                       <Link
-                        href="/myorders"
+                        href="/user/my-orders"
                         onClick={() => setMenuOpen(false)}
                         className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-900 text-slate-300 hover:text-white transition-all duration-200 text-sm font-semibold group"
                       >
@@ -364,7 +364,7 @@ const Nav = ({ user }: { user: IUser }) => {
                 {/* Dropdown Menu Items */}
                 {user.role === "user" && (
                   <Link
-                    href="/myorders"
+                    href="/user/my-orders"
                     onClick={() => setOpen(false)}
                     className="group flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-green-50/50 text-slate-700 hover:text-green-700 transition-all duration-200 text-sm font-medium"
                   >
