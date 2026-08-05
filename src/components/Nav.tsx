@@ -171,7 +171,7 @@ const Nav = ({ user }: { user: IUser }) => {
                           <span>View Groceries</span>
                         </Link>
                         <Link
-                          href="/admin/orders"
+                          href="/admin/manage-orders"
                           onClick={() => setMenuOpen(false)}
                           className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-900 text-slate-300 hover:text-white transition-all duration-200 text-sm font-semibold group"
                         >
@@ -294,7 +294,7 @@ const Nav = ({ user }: { user: IUser }) => {
               <span>View Groceries</span>
             </Link>
             <Link
-              href={"/admin/orders"}
+              href={"/admin/manage-orders"}
               className="flex items-center gap-1.5 text-white/90 hover:text-white hover:bg-white/10 px-3 py-2 rounded-xl text-xs md:text-sm font-bold tracking-wide transition-all duration-200 active:scale-95"
             >
               <ClipboardList className="w-4 h-4" />
