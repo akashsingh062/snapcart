@@ -18,8 +18,10 @@ import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { createPortal } from "react-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
+import { setUserData } from "@/redux/userSlice";
+import GeoUpdater from "@/components/GeoUpdater";
 
 interface IUser {
   _id?: string;
@@ -31,6 +33,7 @@ interface IUser {
   image?: string;
 }
 const Nav = ({ user }: { user: IUser }) => {
+  const dispatch = useDispatch();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [searchBarOpen, setSearchBarOpen] = useState(false);
@@ -39,6 +42,12 @@ const Nav = ({ user }: { user: IUser }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const {cartData} = useSelector((state:RootState)=>state.cart)
+
+  useEffect(() => {
+    if (user) {
+      dispatch(setUserData(user));
+    }
+  }, [user, dispatch]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -102,54 +111,46 @@ const Nav = ({ user }: { user: IUser }) => {
                 initial={{ x: "100%", opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: "100%", opacity: 0 }}
-                transition={{ type: "spring", stiffness: 260, damping: 30 }}
-                className="fixed top-0 right-0 h-full w-80 bg-slate-950 text-white z-70 shadow-2xl p-6 flex flex-col justify-between"
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="fixed top-0 right-0 h-full w-70 sm:w-[320px] bg-slate-950 text-white z-70 shadow-2xl p-6 flex flex-col justify-between overflow-y-auto border-l border-slate-800"
               >
                 <div>
                   {/* Header */}
-                  <div className="flex justify-between items-center pb-6 border-b border-slate-800">
-                    <h1 className="text-xl font-extrabold tracking-tight text-green-400">
-                      {user.role === "admin" ? "Admin Panel" : "Menu"}
-                    </h1>
+                  <div className="flex items-center justify-between pb-6 border-b border-slate-800">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-linear-to-tr from-green-600 to-emerald-400 flex items-center justify-center font-bold text-white shadow-md">
+                        {user.name ? user.name[0].toUpperCase() : "U"}
+                      </div>
+                      <div className="overflow-hidden">
+                        <p className="font-bold text-sm truncate text-slate-100">
+                          {user.name}
+                        </p>
+                        <p className="text-xs text-slate-400 truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
                     <button
                       onClick={() => setMenuOpen(false)}
-                      className="w-10 h-10 rounded-full bg-slate-900 hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition duration-200 cursor-pointer"
+                      className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition-colors"
                     >
                       <X className="w-5 h-5" />
                     </button>
                   </div>
 
-                  {/* Profile info section */}
-                  <div className="py-8 flex flex-col items-center text-center border-b border-slate-800">
-                    <div className="w-20 h-20 relative rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border-2 border-green-500 shadow-lg shadow-green-500/20 mb-4">
-                      {user.image ? (
-                        <Image
-                          src={user.image}
-                          alt="profile"
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <User className="text-green-500 w-10 h-10" />
-                      )}
-                    </div>
-                    <h2 className="text-lg font-bold text-white leading-snug">{user.name}</h2>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-green-400 mt-1">
-                      {user.role}
-                    </p>
-                  </div>
-
-                  {/* Nav Links */}
-                  <div className="py-6 flex flex-col gap-2">
+                  {/* Navigation Links */}
+                  <div className="py-6 space-y-2">
                     {user.role === "user" && (
-                      <Link
-                        href="/user/my-orders"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-900 text-slate-300 hover:text-white transition-all duration-200 text-sm font-semibold group"
-                      >
-                        <Package className="w-5 h-5 text-slate-500 group-hover:text-green-500 transition-colors" />
-                        <span>My Orders</span>
-                      </Link>
+                      <>
+                        <Link
+                          href="/user/my-orders"
+                          onClick={() => setMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-900 text-slate-300 hover:text-white transition-all duration-200 text-sm font-semibold group"
+                        >
+                          <Package className="w-5 h-5 text-slate-500 group-hover:text-green-500 transition-colors" />
+                          <span>My Orders</span>
+                        </Link>
+                      </>
                     )}
 
                     {user.role === "admin" && (
@@ -161,14 +162,6 @@ const Nav = ({ user }: { user: IUser }) => {
                         >
                           <PlusCircle className="w-5 h-5 text-slate-500 group-hover:text-green-500 transition-colors" />
                           <span>Add Grocery</span>
-                        </Link>
-                        <Link
-                          href="/admin/view-groceries"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-900 text-slate-300 hover:text-white transition-all duration-200 text-sm font-semibold group"
-                        >
-                          <LayoutGrid className="w-5 h-5 text-slate-500 group-hover:text-green-500 transition-colors" />
-                          <span>View Groceries</span>
                         </Link>
                         <Link
                           href="/admin/manage-orders"
@@ -190,9 +183,9 @@ const Nav = ({ user }: { user: IUser }) => {
                       setMenuOpen(false);
                       handleLogout();
                     }}
-                    className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition-all duration-200 text-sm font-bold cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 font-semibold text-sm transition-all duration-200 border border-red-500/20"
                   >
-                    <LogOut className="w-5 h-5" />
+                    <LogOut className="w-4 h-4" />
                     <span>Log Out</span>
                   </button>
                 </div>
@@ -204,7 +197,9 @@ const Nav = ({ user }: { user: IUser }) => {
       )
     : null;
   return (
-    <div className="w-[95%] fixed top-4 left-1/2 -translate-x-1/2 bg-linear-to-r from-green-500 to-green-700 rounded-2xl shadow-lg shadow-black/30 flex justify-between items-center h-20 px-4 md:px-8 z-50">
+    <>
+      <GeoUpdater />
+      <div className="w-[95%] fixed top-4 left-1/2 -translate-x-1/2 bg-linear-to-r from-green-500 to-green-700 rounded-2xl shadow-lg shadow-black/30 flex justify-between items-center h-20 px-4 md:px-8 z-50">
       <Link
         href="/"
         className="text-white font-extrabold text-2xl sm:text-3xl tracking-wide hover:scale-105 transition-transform duration-300"
@@ -388,9 +383,11 @@ const Nav = ({ user }: { user: IUser }) => {
           </AnimatePresence>
         </div>
       </div>
-      {sidebar}
     </div>
+    {sidebar}
+  </>
   );
 };
 
 export default Nav;
+
