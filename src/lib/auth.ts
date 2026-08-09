@@ -1,15 +1,36 @@
 import { betterAuth } from "better-auth";
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import connectdb from "./db";
+import User from "@/models/user.model";
 
 const client = new MongoClient(process.env.MONGODB_URL as string);
 const db = client.db();
 
 export const auth = betterAuth({
   database: mongodbAdapter(db, {
-    // Optional: if you don't provide a client, database transactions won't be enabled.
+   
     client,
   }),
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          try {
+            await connectdb();
+            await User.findByIdAndUpdate(user.id, {
+              location: {
+                type: "Point",
+                coordinates: [0, 0],
+              },
+            });
+          } catch (err) {
+            console.error("Error setting default location on user signup:", err);
+          }
+        },
+      },
+    },
+  },
   user: {
     additionalFields: {
       role: {
@@ -20,6 +41,16 @@ export const auth = betterAuth({
       mobile: {
         type: "string",
         required: false,
+      },
+      socketId: {
+        type: "string",
+        required: false,
+        defaultValue: null,
+      },
+      isOnline: {
+        type: "boolean",
+        required: false,
+        defaultValue: false,
       },
     },
   },
