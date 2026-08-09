@@ -20,12 +20,23 @@ export async function GET(req: NextRequest) {
     }
 
     await connectdb();
-    const user = await User.findOne({ email: session.user?.email }).select("-password")
-    if(!user){
-      return NextResponse.json({
-        success:false,
-        message:"User not found"
-      },{status:404})
+    const userId = session.session?.userId || session.user?.id;
+    let user = null;
+    if (userId) {
+      user = await User.findById(userId).select("-password");
+    }
+    if (!user && session.user?.email) {
+      user = await User.findOne({ email: session.user.email }).select("-password");
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "User not found",
+        },
+        { status: 404 },
+      );
     }
 
     return NextResponse.json({
