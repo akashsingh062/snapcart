@@ -10,15 +10,17 @@ interface IUser {
   image?: string;
   location: {
     type: {
-        type: StringConstructor;
-        enum: string[];
-        default: string;
+      type: StringConstructor;
+      enum: string[];
+      default: string;
     };
     coordinates: {
-        type: NumberConstructor[];
-        default: number[];
+      type: NumberConstructor[];
+      default: number[];
     };
-}
+  };
+  socketId:string|null;
+  isOnline:boolean;
 }
 const userSchema = new mongoose.Schema<IUser>(
   {
@@ -65,12 +67,20 @@ const userSchema = new mongoose.Schema<IUser>(
         default: [0, 0],
       },
     },
+    socketId:{
+      type:String,
+      default:null
+    },
+    isOnline:{
+      type:Boolean,
+      default:false
+    }
   },
   {
     timestamps: true,
   },
 );
-userSchema.index({location:"2dsphere"})
+userSchema.index({ location: "2dsphere" });
 const User = mongoose.models.User || mongoose.model("User", userSchema, "user");
 
 export default User;
