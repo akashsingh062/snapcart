@@ -38,6 +38,7 @@ interface IOrderItem {
 interface IPopulatedOrder {
   _id: string;
   user?: ICustomer | null;
+  assignedDeliveryBoy?: string | { _id: string; name?: string; email?: string; mobile?: string } | null;
   items: IOrderItem[];
   totalAmount: string;
   paymentMethod: "cod" | "online" | string;
@@ -85,8 +86,15 @@ export default function DeliveryBoyCurrentOrderPage() {
         const { latitude, longitude } = pos.coords;
         setDriverLocation({ lat: latitude, lng: longitude });
 
+        const driverId =
+          assignment?.order?.assignedDeliveryBoy &&
+          typeof assignment.order.assignedDeliveryBoy === "object"
+            ? assignment.order.assignedDeliveryBoy._id
+            : assignment?.order?.assignedDeliveryBoy;
+
         // Emit location signal to update user's map in real time
         socket?.emit("update-location", {
+          userId: driverId,
           latitude,
           longitude,
         });
@@ -96,7 +104,7 @@ export default function DeliveryBoyCurrentOrderPage() {
       },
       {
         enableHighAccuracy: true,
-        maximumAge: 3000,
+        maximumAge: 0,
         timeout: 10000,
       }
     );
@@ -104,7 +112,7 @@ export default function DeliveryBoyCurrentOrderPage() {
     return () => {
       navigator.geolocation.clearWatch(watchId);
     };
-  }, []);
+  }, [assignment?.order?.assignedDeliveryBoy]);
 
   useEffect(() => {
     let isMounted = true;
