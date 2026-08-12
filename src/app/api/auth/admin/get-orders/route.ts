@@ -1,11 +1,15 @@
 import connectdb from "@/lib/db";
 import Order from "@/models/order.model";
+import User from "@/models/user.model";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
   try {
     await connectdb();
-    const orders = await Order.find().populate("user").sort({ createdAt: -1 });
+    const orders = await Order.find()
+      .populate("user")
+      .populate("assignedDeliveryBoy", "name email mobile")
+      .sort({ createdAt: -1 });
     return NextResponse.json({ success: true, orders });
   } catch (error) {
     console.log(error);
