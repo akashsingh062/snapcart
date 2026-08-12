@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import {
@@ -13,9 +13,11 @@ import {
 } from "lucide-react";
 import axios from "axios";
 
+
+
 const EditRoleMobile = () => {
   const router = useRouter();
-  const [roles] = useState([
+  const [roles, setRoles] = useState([
     {
       id: "user",
       label: "Customer",
@@ -35,6 +37,24 @@ const EditRoleMobile = () => {
       icon: UserCog,
     },
   ]);
+
+  const checkForAdmin = async () => {
+    try {
+      const res = await axios.get("/api/auth/check-for-admin");
+      return res.data.success;
+    } catch (error) {
+      console.error("Failed to check for admin:", error);
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    checkForAdmin().then((isAdmin) => {
+      if (isAdmin) {
+        setRoles((prev) => prev.filter((r) => r.id !== "admin"));
+      }
+    });
+  }, []);
   const [selectedRole, setSelectedRole] = useState<string>("");
   const [mobile, setMobile] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -126,7 +146,7 @@ const EditRoleMobile = () => {
                       setSelectedRole(role.id);
                       setError("");
                     }}
-                    className={`relative flex flex-col items-center justify-between p-5 border rounded-2xl cursor-pointer text-center transition-all duration-300 min-h-[160px] ${
+                    className={`relative flex flex-col items-center justify-between p-5 border rounded-2xl cursor-pointer text-center transition-all duration-300 min-h-40 ${
                       isSelected
                         ? "border-green-600 bg-green-50/50 text-green-800 shadow-md ring-2 ring-green-600/10"
                         : "border-slate-200 bg-white hover:border-slate-300 text-slate-600 hover:text-slate-800"
