@@ -53,14 +53,21 @@ export default function ManageOrders() {
     const handleStatusUpdate = (data: {
       orderId: string;
       status: string;
+      isPaid?: boolean;
       assignedDeliveryBoy?: IUserRef | string;
     }) => {
       setOrders((prev) =>
         prev.map((ord) =>
-          ord._id === data.orderId
+          String(ord._id) === String(data.orderId)
             ? {
                 ...ord,
                 status: data.status,
+                isPaid:
+                  data.isPaid !== undefined
+                    ? data.isPaid
+                    : data.status?.toLowerCase() === "delivered"
+                    ? true
+                    : ord.isPaid,
                 ...(data.assignedDeliveryBoy
                   ? { assignedDeliveryBoy: data.assignedDeliveryBoy }
                   : {}),
