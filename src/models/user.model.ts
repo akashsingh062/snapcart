@@ -81,6 +81,13 @@ const userSchema = new mongoose.Schema<IUser>(
   },
 );
 userSchema.index({ location: "2dsphere" });
-const User = mongoose.models.User || mongoose.model("User", userSchema, "user");
+const User =
+  mongoose.models.User ||
+  mongoose.models.user ||
+  mongoose.model("User", userSchema, "user");
+
+if (!mongoose.models.user) {
+  mongoose.models.user = User;
+}
 
 export default User;
