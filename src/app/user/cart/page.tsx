@@ -24,7 +24,9 @@ import { removeFromCart, updateQuantity, ICartItem } from "@/redux/cartSlice";
 const CartPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { cartData } = useSelector((state: RootState) => state.cart);
+  const { cartData, subTotal, deliveryFee, platformFee, finalTotal } = useSelector(
+    (state: RootState) => state.cart
+  );
 
   const handleQtyUpdate = (id: string, newQty: number) => {
     dispatch(updateQuantity({ _id: id, quantity: newQty }));
@@ -33,13 +35,6 @@ const CartPage = () => {
   const handleRemove = (id: string) => {
     dispatch(removeFromCart(id));
   };
-
-  // Calculations
-  const subtotal = cartData.reduce((acc, item) => acc + Number(item.price) * item.quantity, 0);
-  const platformFee = cartData.length > 0 ? 5 : 0;
-  // Free delivery above ₹250, else ₹30
-  const deliveryCharge = cartData.length > 0 ? (subtotal > 250 ? 0 : 30) : 0;
-  const totalToPay = subtotal + platformFee + deliveryCharge;
 
   return (
     <div className="w-[95%] sm:w-[90%] md:w-[85%] max-w-6xl mx-auto pt-24 pb-24 relative min-h-[80vh]">
@@ -239,7 +234,7 @@ const CartPage = () => {
               <div className="space-y-3.5 text-sm pb-5 border-b border-slate-100">
                 <div className="flex justify-between items-center text-slate-600">
                   <span>Bag Subtotal</span>
-                  <span className="font-semibold text-slate-800">₹{subtotal.toFixed(2)}</span>
+                  <span className="font-semibold text-slate-800">₹{subTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center text-slate-600">
                   <span className="flex items-center gap-1.5">
@@ -247,12 +242,12 @@ const CartPage = () => {
                     <span>Delivery Charge</span>
                   </span>
                   <span className="font-semibold">
-                    {deliveryCharge === 0 ? (
+                    {deliveryFee === 0 ? (
                       <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded text-xs font-bold uppercase">
                         Free
                       </span>
                     ) : (
-                      `₹${deliveryCharge.toFixed(2)}`
+                      `₹${deliveryFee.toFixed(2)}`
                     )}
                   </span>
                 </div>
@@ -262,15 +257,15 @@ const CartPage = () => {
                 </div>
 
                 {/* Free shipping progress indicator */}
-                {subtotal < 250 && (
+                {subTotal < 250 && subTotal > 0 && (
                   <div className="bg-emerald-50/50 border border-emerald-100/40 rounded-xl p-3 mt-4 text-xs text-slate-600">
                     <span className="font-medium text-emerald-700 block mb-1">
-                      Add <span className="font-bold">₹{(250 - subtotal).toFixed(2)}</span> more for Free Delivery!
+                      Add <span className="font-bold">₹{(250 - subTotal).toFixed(2)}</span> more for Free Delivery!
                     </span>
                     <div className="w-full bg-slate-200/60 rounded-full h-1.5 overflow-hidden">
                       <div 
                         className="bg-emerald-500 h-full rounded-full transition-all duration-300"
-                        style={{ width: `${(subtotal / 250) * 100}%` }}
+                        style={{ width: `${(subTotal / 250) * 100}%` }}
                       />
                     </div>
                   </div>
@@ -280,7 +275,7 @@ const CartPage = () => {
               {/* Total amount to pay */}
               <div className="flex justify-between items-center pt-5 pb-6">
                 <span className="text-base font-bold text-slate-800">Grand Total</span>
-                <span className="text-2xl font-extrabold text-slate-900">₹{totalToPay.toFixed(2)}</span>
+                <span className="text-2xl font-extrabold text-slate-900">₹{finalTotal.toFixed(2)}</span>
               </div>
 
               {/* Checkout CTA */}
