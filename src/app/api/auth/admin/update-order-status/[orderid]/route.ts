@@ -24,6 +24,9 @@ export async function POST(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
     order.status = status;
+    if (status?.toLowerCase() === "delivered") {
+      order.isPaid = true;
+    }
     let deliveryBoysPayload: {
       id: unknown;
       name: string;
