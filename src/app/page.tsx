@@ -7,7 +7,7 @@ import EditRoleMobile from "@/components/EditRoleMobile";
 import Nav from "@/components/Nav";
 import UserDashboard from "@/components/UserDashboard";
 import AdminDashboard from "@/components/AdminDashboard";
-import DeliveryBoyDashboard from "@/components/DeliveryBoyDashboard";
+import DeliveryBoy from "@/components/DeliveryBoy";
 
 export default async function Home() {
   const session = await auth.api.getSession({
@@ -38,7 +38,7 @@ export default async function Home() {
       <Nav user={plainUser} />
       {user.role == "user" && <UserDashboard />}
       {user.role == "admin" && <AdminDashboard />}
-      {user.role == "delivery-boy" && <DeliveryBoyDashboard />}
+      {(user.role == "deliveryBoy" || user.role == "delivery-boy") && <DeliveryBoy />}
     </>
   );
 }
