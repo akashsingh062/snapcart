@@ -86,6 +86,7 @@ async function completeAssignment(req: NextRequest) {
       await emitEventHandler("order-status-update", {
         orderId: order._id,
         status: order.status,
+        isPaid: true,
       });
     }
 
