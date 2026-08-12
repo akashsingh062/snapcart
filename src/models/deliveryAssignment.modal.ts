@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 
-interface IDeliveryAssignment {
+export interface IDeliveryAssignment {
   order: mongoose.Types.ObjectId;
-  brodcastedTo: mongoose.Types.ObjectId[];
+  brodcastedTo?: mongoose.Types.ObjectId[];
+  broadcastedTo?: mongoose.Types.ObjectId[];
   assignedTo: mongoose.Types.ObjectId | null;
   status: "broadcasted" | "assigned" | "completed";
   acceptedAt: Date;
@@ -20,12 +21,18 @@ const deliveryAssignmentSchema = new mongoose.Schema<IDeliveryAssignment>(
     brodcastedTo: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "user",
+        ref: "User",
+      },
+    ],
+    broadcastedTo: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
       },
     ],
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: "User",
     },
     status: {
       type: String,
