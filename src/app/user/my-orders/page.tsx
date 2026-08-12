@@ -15,11 +15,14 @@ import {
   PackageX,
   ShoppingBag,
   Truck,
+  Phone,
+  Navigation,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { getSocket } from "@/lib/socket";
 
 interface IOrderItem {
   _id?: string;
@@ -31,8 +34,16 @@ interface IOrderItem {
   quantity: number;
 }
 
+export interface IDeliveryBoyRef {
+  _id: string;
+  name?: string;
+  mobile?: string;
+  image?: string;
+}
+
 interface IOrder {
   _id: string;
+  assignedDeliveryBoy?: IDeliveryBoyRef | string | null;
   items: IOrderItem[];
   totalAmount: string;
   paymentMethod: "cod" | "online" | string;
@@ -70,6 +81,35 @@ const MyOrders = () => {
       }
     };
     fetchOrders();
+  }, []);
+
+  useEffect(() => {
+    const socket = getSocket();
+    const handleStatusUpdate = (data: {
+      orderId: string;
+      status: string;
+      assignedDeliveryBoy?: IDeliveryBoyRef | string;
+    }) => {
+      setOrders((prev) =>
+        prev.map((order) =>
+          order._id === data.orderId
+            ? {
+                ...order,
+                status: data.status,
+                ...(data.assignedDeliveryBoy
+                  ? { assignedDeliveryBoy: data.assignedDeliveryBoy }
+                  : {}),
+              }
+            : order
+        )
+      );
+    };
+
+    socket?.on("order-status-update", handleStatusUpdate);
+
+    return () => {
+      socket?.off("order-status-update", handleStatusUpdate);
+    };
   }, []);
 
   const filteredOrders = orders.filter((order) => {
@@ -201,8 +241,49 @@ const MyOrders = () => {
                     </p>
                   </div>
                 </div>
-                <div>{getStatusBadge(order.status)}</div>
+                <div className="flex items-center gap-2.5">
+                  {(order.status?.toLowerCase() === "out of delivery" ||
+                    order.status?.toLowerCase() === "out_of_delivery") && (
+                    <Link href={`/user/track-order/${order._id}`}>
+                      <button className="px-3.5 py-1.5 bg-linear-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 active:scale-95">
+                        <Navigation size={13} />
+                        <span>Track Order</span>
+                      </button>
+                    </Link>
+                  )}
+                  {getStatusBadge(order.status)}
+                </div>
               </div>
+
+              {/* Delivery Partner Details (if assigned and order not delivered) */}
+              {order.assignedDeliveryBoy &&
+                typeof order.assignedDeliveryBoy === "object" &&
+                order.status?.toLowerCase() !== "delivered" && (
+                  <div className="bg-linear-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-2xl p-3.5 flex items-center justify-between gap-3 shadow-2xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-emerald-700 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                        <Truck size={20} />
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">
+                          Assigned Delivery Partner
+                        </p>
+                        <p className="text-sm font-extrabold text-slate-900">
+                          {order.assignedDeliveryBoy.name || "Delivery Partner"}
+                        </p>
+                      </div>
+                    </div>
+                    {order.assignedDeliveryBoy.mobile && (
+                      <a
+                        href={`tel:${order.assignedDeliveryBoy.mobile}`}
+                        className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 shadow-xs transition-all cursor-pointer shrink-0"
+                      >
+                        <Phone size={13} />
+                        <span>Call Partner</span>
+                      </a>
+                    )}
+                  </div>
+                )}
 
               {/* Order Items */}
               <div className="space-y-3">
