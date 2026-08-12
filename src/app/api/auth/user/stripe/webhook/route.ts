@@ -1,4 +1,5 @@
 import connectdb from "@/lib/db";
+import emitEventHandler from "@/lib/emitEventHandler";
 import Order from "@/models/order.model";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
@@ -25,11 +26,25 @@ export async function POST(req: NextRequest) {
     try {
       const session = event.data.object as Stripe.Checkout.Session;
       if (!session) return NextResponse.json({ error: "invalid" }, { status: 400 });
-      await connectdb()
-      await Order.findByIdAndUpdate(session?.metadata?.orderId,{
-        isPaid:true,
-        paymentMethod:"online",
-      })
+      await connectdb();
+      const updatedOrder = await Order.findByIdAndUpdate(
+        session?.metadata?.orderId,
+        {
+          isPaid: true,
+          paymentMethod: "online",
+        },
+        { new: true }
+      ).populate("user");
+
+      if (updatedOrder) {
+        await emitEventHandler("new-order", updatedOrder);
+        await emitEventHandler("order-status-update", {
+          orderId: updatedOrder._id,
+          status: updatedOrder.status,
+          isPaid: true,
+        });
+      }
+
       return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
       console.log("stripe webhook error", error);
