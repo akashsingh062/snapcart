@@ -121,7 +121,7 @@ const orderSchema = new mongoose.Schema<IOrder>(
     },
     assignedDeliveryBoy:{
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: "User",
       default: null,
     },
     status: {
