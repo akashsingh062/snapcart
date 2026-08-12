@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
 import connectDb from "@/lib/db";
+import emitEventHandler from "@/lib/emitEventHandler";
 import Order from "@/models/order.model";
 import User from "@/models/user.model";
 import { headers } from "next/headers";
@@ -45,8 +46,11 @@ export async function POST(req: NextRequest) {
       totalAmount: String(totalAmount),
       paymentMethod,
       address,
-      isPaid: false,
+      isPaid: true,
     });
+
+    await order.populate("user");
+    await emitEventHandler("new-order", order);
 
     const stripeSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
