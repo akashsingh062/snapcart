@@ -4,6 +4,7 @@ import Order from "@/models/order.model";
 import User from "@/models/user.model";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import emitEventHandler from "@/lib/emitEventHandler";
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,6 +45,7 @@ export async function POST(req: NextRequest) {
       address,
     });
 
+    await emitEventHandler("new-order", order)
     return NextResponse.json(
       { message: "Order created successfully", order },
       { status: 200 }
@@ -79,7 +81,9 @@ export async function GET() {
       );
     }
 
-    const orders = await Order.find({ user: user._id }).sort({ createdAt: -1 });
+    const orders = await Order.find({ user: user._id })
+      .populate("assignedDeliveryBoy", "name mobile image")
+      .sort({ createdAt: -1 });
 
     return NextResponse.json({ orders }, { status: 200 });
   } catch (error) {
