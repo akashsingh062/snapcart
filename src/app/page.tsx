@@ -6,10 +6,16 @@ import { redirect } from "next/navigation";
 import EditRoleMobile from "@/components/EditRoleMobile";
 import Nav from "@/components/Nav";
 import UserDashboard from "@/components/UserDashboard";
-import AdminDashboard from "@/components/AdminDashboard";
 import DeliveryBoy from "@/components/DeliveryBoy";
+import Footer from "@/components/Footer";
 
-export default async function Home() {
+export default async function Home(props: {
+  searchParams?: Promise<{ search?: string; category?: string }>;
+}) {
+  const searchParams = await props.searchParams;
+  const search = searchParams?.search || "";
+  const category = searchParams?.category || "";
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -33,11 +39,19 @@ export default async function Home() {
     image: session?.user.image || undefined,
   };
 
+  if (user.role === "admin") {
+    redirect("/admin");
+  }
+
   return (
     <>
       <Nav user={plainUser} />
-      {user.role == "user" && <UserDashboard />}
-      {user.role == "admin" && <AdminDashboard />}
+      {user.role == "user" && (
+        <>
+          <UserDashboard search={search} category={category} />
+          <Footer />
+        </>
+      )}
       {(user.role == "deliveryBoy" || user.role == "delivery-boy") && <DeliveryBoy />}
     </>
   );
