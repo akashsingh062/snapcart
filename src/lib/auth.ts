@@ -8,8 +8,18 @@ const client = new MongoClient(process.env.MONGODB_URL as string);
 const db = client.db();
 
 export const auth = betterAuth({
+  baseURL:
+    process.env.BETTER_AUTH_URL ||
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined),
+  trustedOrigins: [
+    "https://snapcart-d.vercel.app",
+    process.env.BETTER_AUTH_URL,
+    process.env.NEXT_PUBLIC_BASE_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined,
+    "http://localhost:3000",
+  ].filter((url): url is string => Boolean(url)),
   database: mongodbAdapter(db, {
-   
     client,
   }),
   databaseHooks: {
