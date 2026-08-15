@@ -40,11 +40,10 @@ export async function POST(req: NextRequest) {
       data: message,
     });
   } catch (error: unknown) {
-    console.error("Chat save error:", error);
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Internal server error",
+        message: error instanceof Error ? error.message : "Failed to save message",
       },
       { status: 500 }
     );

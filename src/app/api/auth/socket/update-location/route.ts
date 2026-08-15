@@ -22,7 +22,6 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json({message:"Location Updated!"},{status:200})
   } catch (error) {
-    console.error("Update location error:", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to update location" }, { status: 500 });
   }
 }

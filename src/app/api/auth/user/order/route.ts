@@ -45,15 +45,14 @@ export async function POST(req: NextRequest) {
       address,
     });
 
-    await emitEventHandler("new-order", order)
+    await emitEventHandler("new-order", order);
     return NextResponse.json(
       { message: "Order created successfully", order },
       { status: 200 }
     );
-  } catch (error) {
-    console.log(error);
+  } catch {
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Failed to place order. Please try again." },
       { status: 500 }
     );
   }
@@ -86,10 +85,9 @@ export async function GET() {
       .sort({ createdAt: -1 });
 
     return NextResponse.json({ orders }, { status: 200 });
-  } catch (error) {
-    console.log(error);
+  } catch {
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Failed to fetch orders" },
       { status: 500 }
     );
   }

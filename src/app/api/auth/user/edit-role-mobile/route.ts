@@ -35,12 +35,11 @@ export async function POST(req: Request) {
       },
       { status: 200 },
     );
-  } catch (error) {
-    console.log(error);
+  } catch {
     return NextResponse.json(
       {
         success: false,
-        message: `Edit role and mobile error. ${error}`,
+        message: "Failed to update role and mobile number. Please try again.",
       },
       {
         status: 500,

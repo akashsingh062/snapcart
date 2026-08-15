@@ -75,10 +75,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ sessionUrl: stripeSession.url }, { status: 200 });
-  } catch (error) {
-    console.log("Error in payment route:", error);
+  } catch {
     return NextResponse.json(
-      { error: "Failed to process payment" },
+      { error: "Failed to initiate payment session. Please try again." },
       { status: 500 }
     );
   }

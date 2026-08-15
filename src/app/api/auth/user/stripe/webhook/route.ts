@@ -9,26 +9,29 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature");
   const rawBody = await req.text();
-  if (!sig) return NextResponse.json({ error: "No signature" }, { status: 401 });
-  let event;
+  if (!sig) return NextResponse.json({ error: "Missing stripe signature" }, { status: 401 });
+
+  let event: Stripe.Event;
   try {
     event = await stripe.webhooks.constructEvent(
       rawBody,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
-  } catch (error) {
-    console.log("stripe webhook error", error);
-    return NextResponse.json({ error: "invalid" }, { status: 400 });
+  } catch {
+    return NextResponse.json({ error: "Invalid stripe webhook signature" }, { status: 400 });
   }
 
-  if (event?.type == "checkout.session.completed") {
+  if (event?.type === "checkout.session.completed") {
     try {
       const session = event.data.object as Stripe.Checkout.Session;
-      if (!session) return NextResponse.json({ error: "invalid" }, { status: 400 });
+      if (!session?.metadata?.orderId) {
+        return NextResponse.json({ error: "Missing orderId metadata" }, { status: 400 });
+      }
+
       await connectdb();
       const updatedOrder = await Order.findByIdAndUpdate(
-        session?.metadata?.orderId,
+        session.metadata.orderId,
         {
           isPaid: true,
           paymentMethod: "online",
@@ -46,9 +49,10 @@ export async function POST(req: NextRequest) {
       }
 
       return NextResponse.json({ success: true }, { status: 200 });
-    } catch (error) {
-      console.log("stripe webhook error", error);
-      return NextResponse.json({ error: "invalid" }, { status: 400 });
+    } catch {
+      return NextResponse.json({ error: "Failed to process completed checkout session" }, { status: 500 });
     }
   }
+
+  return NextResponse.json({ received: true }, { status: 200 });
 }

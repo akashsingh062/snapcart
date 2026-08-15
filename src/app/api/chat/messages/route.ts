@@ -33,11 +33,10 @@ export async function POST(req: NextRequest) {
       messages,
     });
   } catch (error: unknown) {
-    console.error("Chat messages error:", error);
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Internal server error",
+        message: error instanceof Error ? error.message : "Failed to load messages",
       },
       { status: 500 }
     );

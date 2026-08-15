@@ -14,8 +14,7 @@ export async function POST(request: NextRequest){
             return NextResponse.json({message:"User not found"},{status:404})
         }
         return NextResponse.json({message:"Socket connected", user},{status:200})
-    }catch(err){
-        console.log(err)
+    } catch {
         return NextResponse.json({message:"Failed to connect socket"},{status:500})
     }
 }

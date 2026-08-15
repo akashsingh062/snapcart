@@ -43,11 +43,10 @@ export async function GET(req: NextRequest) {
       success:true,
       user
     },{status:200})
-  } catch (error) {
-    console.log(error);
+  } catch {
     return NextResponse.json({
-      success:false,
-      message:"Internal Server Error",
-    },{status:500})
+      success: false,
+      message: "Failed to fetch user session",
+    }, { status: 500 });
   }
 }

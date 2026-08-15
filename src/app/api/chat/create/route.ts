@@ -45,11 +45,10 @@ export async function POST(req: NextRequest) {
       room,
     });
   } catch (error: unknown) {
-    console.error("Chat create error:", error);
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Internal server error",
+        message: error instanceof Error ? error.message : "Failed to initialize chat room",
       },
       { status: 500 }
     );

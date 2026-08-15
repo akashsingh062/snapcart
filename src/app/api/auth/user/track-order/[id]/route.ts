@@ -37,10 +37,9 @@ export async function GET(
     }
 
     return NextResponse.json({ success: true, order }, { status: 200 });
-  } catch (error) {
-    console.error("Track order error:", error);
+  } catch {
     return NextResponse.json(
-      { success: false, message: "Internal server error" },
+      { success: false, message: "Failed to fetch order details" },
       { status: 500 }
     );
   }
