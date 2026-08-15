@@ -31,7 +31,9 @@ export async function GET() {
 
     // Fetch dashboard metrics
     const [orders, totalProducts, deliveryBoysCount] = await Promise.all([
-      Order.find({}).sort({ createdAt: -1 }),
+      Order.find({
+        $or: [{ paymentMethod: "cod" }, { isPaid: true }],
+      }).sort({ createdAt: -1 }),
       Grocery.countDocuments({}),
       User.countDocuments({ role: "deliveryBoy" }),
     ]);

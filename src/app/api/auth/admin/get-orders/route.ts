@@ -6,7 +6,9 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET() {
   try {
     await connectdb();
-    const orders = await Order.find()
+    const orders = await Order.find({
+      $or: [{ paymentMethod: "cod" }, { isPaid: true }],
+    })
       .populate("user")
       .populate("assignedDeliveryBoy", "name email mobile")
       .sort({ createdAt: -1 });

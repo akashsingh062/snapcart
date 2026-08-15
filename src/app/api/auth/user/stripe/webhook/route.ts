@@ -40,9 +40,10 @@ export async function POST(req: NextRequest) {
       ).populate("user");
 
       if (updatedOrder) {
-        await emitEventHandler("new-order", updatedOrder);
+        const plainOrder = JSON.parse(JSON.stringify(updatedOrder));
+        await emitEventHandler("new-order", plainOrder);
         await emitEventHandler("order-status-update", {
-          orderId: updatedOrder._id,
+          orderId: updatedOrder._id.toString(),
           status: updatedOrder.status,
           isPaid: true,
         });

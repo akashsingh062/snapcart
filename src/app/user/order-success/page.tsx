@@ -12,17 +12,27 @@ import {
   Truck,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import confetti from "canvas-confetti";
 import { useDispatch } from "react-redux";
 import { emptyCart } from "@/redux/cartSlice";
+import axios from "axios";
 
 const OrderSuccess = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(emptyCart());
+
+    const sessionId = searchParams.get("session_id");
+    const orderId = searchParams.get("orderId");
+
+    if (sessionId && orderId) {
+      axios.post("/api/auth/user/payment/verify", { sessionId, orderId }).catch(() => {});
+    }
+
     const duration = 2000;
     const end = Date.now() + duration;
 

@@ -80,7 +80,10 @@ export async function GET() {
       );
     }
 
-    const orders = await Order.find({ user: user._id })
+    const orders = await Order.find({
+      user: user._id,
+      $or: [{ paymentMethod: "cod" }, { isPaid: true }],
+    })
       .populate("assignedDeliveryBoy", "name mobile image")
       .sort({ createdAt: -1 });
 
