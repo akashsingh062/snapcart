@@ -1,8 +1,10 @@
 import { auth } from "@/lib/auth";
 import connectdb from "@/lib/db";
 import emitEventHandler from "@/lib/emitEventHandler";
+import { sendMail } from "@/lib/mailer";
 import DeliveryAssignment from "@/models/deliveryAssignment.modal";
 import Order from "@/models/order.model";
+import "@/models/user.model"; // ensure model registration
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -83,12 +85,36 @@ export async function GET(
     assignment.acceptedAt = new Date();
     await assignment.save();
 
-    const order = await Order.findById(assignment.order);
+    const order = await Order.findById(assignment.order).populate("user", "email name");
     if (order) {
       order.assignedDeliveryBoy = deliveryBoyId;
       order.status = "out of delivery";
+
+      if (!order.deliveryOtp) {
+        order.deliveryOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      }
+      order.deliveryOtpVerification = false;
+
       await order.save();
       await order.populate("assignedDeliveryBoy", "name email mobile");
+
+      const recipientEmail =
+        typeof order.user === "object" && order.user && "email" in order.user
+          ? (order.user as { email: string }).email
+          : null;
+
+      if (recipientEmail && order.deliveryOtp) {
+        sendMail(
+          recipientEmail,
+          "Your Order is Out for Delivery - SnapCart Verification OTP",
+          `<div style="font-family: Arial, sans-serif; padding: 20px;">
+            <h2>Your Order is Out for Delivery! 🚚</h2>
+            <p>Your delivery partner is on the way. Share this OTP with them upon arrival to receive your package:</p>
+            <h1 style="color: #047857; letter-spacing: 4px; font-size: 32px;">${order.deliveryOtp}</h1>
+            <p>Order ID: <strong>#${order._id.toString().slice(-6).toUpperCase()}</strong></p>
+          </div>`
+        ).catch((err) => console.error("Error sending delivery OTP mail:", err));
+      }
 
       // Notify admin and user about order status and assigned delivery partner
       await emitEventHandler("order-status-update", {
