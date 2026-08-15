@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 import { motion } from "motion/react";
 import {
   ArrowRight,
@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   ShoppingBag,
   Truck,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -18,7 +19,7 @@ import { useDispatch } from "react-redux";
 import { emptyCart } from "@/redux/cartSlice";
 import axios from "axios";
 
-const OrderSuccess = () => {
+function OrderSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
@@ -58,7 +59,7 @@ const OrderSuccess = () => {
     };
 
     frame();
-  }, []);
+  }, [dispatch, searchParams]);
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center pt-28 pb-12 px-4 relative overflow-hidden">
@@ -167,6 +168,18 @@ const OrderSuccess = () => {
       </motion.div>
     </div>
   );
-};
+}
 
-export default OrderSuccess;
+export default function OrderSuccess() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[85vh] flex items-center justify-center pt-28">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+        </div>
+      }
+    >
+      <OrderSuccessContent />
+    </Suspense>
+  );
+}
