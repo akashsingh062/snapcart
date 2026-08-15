@@ -7,7 +7,7 @@ import User from "@/models/user.model";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
-async function handleCompleteAssignment(assignmentId: string) {
+async function handleCompleteAssignment(req: NextRequest, assignmentId: string) {
   try {
     await connectdb();
 
@@ -54,21 +54,57 @@ async function handleCompleteAssignment(assignmentId: string) {
       );
     }
 
+    const order = await Order.findById(assignment.order);
+    if (!order) {
+      return NextResponse.json(
+        { success: false, message: "Associated order not found" },
+        { status: 404 }
+      );
+    }
+
+    const { searchParams } = new URL(req.url);
+    let otpToVerify = searchParams.get("otp");
+
+    if (req.method === "POST") {
+      try {
+        const body = await req.json();
+        if (!otpToVerify) otpToVerify = body.otp;
+      } catch {
+        // Body optional
+      }
+    }
+
+    if (!order.deliveryOtpVerification) {
+      if (
+        otpToVerify &&
+        order.deliveryOtp &&
+        order.deliveryOtp.trim() === String(otpToVerify).trim()
+      ) {
+        order.deliveryOtpVerification = true;
+      } else {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "OTP verification required before marking delivery as completed.",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     assignment.status = "completed";
     await assignment.save();
 
-    const order = await Order.findById(assignment.order);
-    if (order) {
-      order.status = "delivered";
-      order.isPaid = true;
-      await order.save();
+    order.status = "delivered";
+    order.isPaid = true;
+    order.deliveredAt = new Date();
+    await order.save();
 
-      await emitEventHandler("order-status-update", {
-        orderId: order._id,
-        status: order.status,
-        isPaid: true,
-      });
-    }
+    await emitEventHandler("order-status-update", {
+      orderId: order._id,
+      status: order.status,
+      isPaid: true,
+    });
 
     return NextResponse.json(
       {
@@ -95,7 +131,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  return handleCompleteAssignment(resolvedParams.id);
+  return handleCompleteAssignment(req, resolvedParams.id);
 }
 
 export async function POST(
@@ -103,5 +139,5 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
-  return handleCompleteAssignment(resolvedParams.id);
+  return handleCompleteAssignment(req, resolvedParams.id);
 }
