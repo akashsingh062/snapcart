@@ -64,9 +64,8 @@ export async function GET() {
 
     return NextResponse.json({ success: true, assignments }, { status: 200 });
   } catch (error) {
-    console.error("Get assignments error:", error);
     return NextResponse.json(
-      { success: false, message: error instanceof Error ? error.message : "Internal error" },
+      { success: false, message: error instanceof Error ? error.message : "Failed to fetch delivery assignments" },
       { status: 500 },
     );
   }

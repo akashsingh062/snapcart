@@ -118,7 +118,6 @@ export async function GET() {
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Fetch delivery progress error:", error);
     return NextResponse.json(
       {
         success: false,

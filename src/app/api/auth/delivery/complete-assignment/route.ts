@@ -125,11 +125,10 @@ async function completeAssignment(req: NextRequest) {
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Complete assignment error:", error);
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Internal server error",
+        message: error instanceof Error ? error.message : "Failed to complete delivery assignment",
       },
       { status: 500 }
     );

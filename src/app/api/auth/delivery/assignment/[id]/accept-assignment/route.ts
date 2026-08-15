@@ -146,11 +146,9 @@ export async function GET(
             <h1 style="color: #047857; letter-spacing: 4px; font-size: 32px;">${order.deliveryOtp}</h1>
             <p>Order ID: <strong>#${order._id.toString().slice(-6).toUpperCase()}</strong></p>
           </div>`
-        ).catch((err) => console.error("Error sending delivery OTP mail:", err));
+        ).catch(() => {});
       }
 
-      // Notify admin and user about order status and assigned delivery partner
-      // Notify admin and user about order status and assigned delivery partner
       await emitEventHandler("order-status-update", {
         orderId: order._id,
         status: order.status,
@@ -158,7 +156,6 @@ export async function GET(
       });
     }
 
-    // Broadcast event so other delivery boys immediately remove this assignment from their lists
     await emitEventHandler("remove-assignment", { assignmentId: assignment._id.toString() });
 
     await DeliveryAssignment.updateMany(
@@ -174,11 +171,10 @@ export async function GET(
 
     return NextResponse.json({ success: true, message: "Assignment accepted successfully 🚀" });
   } catch (error) {
-    console.error("Accept assignment error:", error);
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Internal error",
+        message: error instanceof Error ? error.message : "Failed to accept assignment",
       },
       { status: 500 }
     );

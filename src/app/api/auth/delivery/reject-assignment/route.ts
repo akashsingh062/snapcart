@@ -55,9 +55,8 @@ export async function POST(req: Request) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Reject assignment api error:", error);
     return NextResponse.json(
-      { success: false, message: error instanceof Error ? error.message : "Internal error" },
+      { success: false, message: error instanceof Error ? error.message : "Failed to skip assignment" },
       { status: 500 }
     );
   }

@@ -51,10 +51,9 @@ export async function POST(req: NextRequest) {
       message: "OTP generated and sent successfully",
       deliveryOtp: otp,
     });
-  } catch (error) {
-    console.error("Error sending OTP:", error);
+  } catch {
     return NextResponse.json(
-      { success: false, message: "Error sending OTP" },
+      { success: false, message: "Failed to send delivery verification OTP" },
       { status: 500 }
     );
   }
