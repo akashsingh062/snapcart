@@ -16,9 +16,11 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
+import { getSocket } from "@/lib/socket";
 
 interface AdminNavProps {
   user?: {
+    _id?: string;
     name?: string;
     email?: string;
     image?: string;
@@ -31,6 +33,13 @@ export default function AdminNav({ user }: AdminNavProps) {
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const profileDropDown = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (user?._id) {
+      const socket = getSocket();
+      socket.emit("identity", user._id);
+    }
+  }, [user?._id]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

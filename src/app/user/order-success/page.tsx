@@ -14,11 +14,15 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
+import { useDispatch } from "react-redux";
+import { emptyCart } from "@/redux/cartSlice";
 
 const OrderSuccess = () => {
   const router = useRouter();
+  const dispatch = useDispatch();
 
   useEffect(() => {
+    dispatch(emptyCart());
     const duration = 2000;
     const end = Date.now() + duration;
 

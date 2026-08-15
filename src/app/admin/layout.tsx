@@ -26,6 +26,7 @@ export default async function AdminLayout({
   }
 
   const plainUser = {
+    _id: user._id.toString(),
     name: user.name,
     email: user.email,
     image: session.user.image || undefined,
