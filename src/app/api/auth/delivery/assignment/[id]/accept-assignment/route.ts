@@ -1,10 +1,11 @@
 import { auth } from "@/lib/auth";
 import connectdb from "@/lib/db";
 import emitEventHandler from "@/lib/emitEventHandler";
+import { getDistanceKm } from "@/lib/geo";
 import { sendMail } from "@/lib/mailer";
 import DeliveryAssignment from "@/models/deliveryAssignment.modal";
 import Order from "@/models/order.model";
-import "@/models/user.model"; // ensure model registration
+import User from "@/models/user.model";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -19,8 +20,21 @@ export async function GET(
       headers: await headers(),
     });
     const deliveryBoyId = session?.user?.id || session?.session?.userId;
-    if (!deliveryBoyId) {
+    const userEmail = session?.user?.email;
+
+    if (!deliveryBoyId && !userEmail) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    }
+
+    const deliveryBoy = await User.findOne({
+      $or: [{ _id: deliveryBoyId }, { email: userEmail }],
+    });
+
+    if (!deliveryBoy) {
+      return NextResponse.json(
+        { success: false, message: "Delivery partner profile not found" },
+        { status: 404 }
+      );
     }
 
     // Find assignment by Assignment ID or Order ID
@@ -39,7 +53,7 @@ export async function GET(
     }
 
     if (assignment.status === "assigned") {
-      if (assignment.assignedTo?.toString() === deliveryBoyId.toString()) {
+      if (assignment.assignedTo?.toString() === deliveryBoy._id.toString()) {
         return NextResponse.json({
           success: true,
           message: "Assignment is already accepted by you",
@@ -64,8 +78,27 @@ export async function GET(
       );
     }
 
+    const targetOrder = await Order.findById(assignment.order);
+    if (targetOrder && targetOrder.address) {
+      const boyLng = deliveryBoy.location?.coordinates?.[0];
+      const boyLat = deliveryBoy.location?.coordinates?.[1];
+      const orderLat = targetOrder.address.latitude;
+      const orderLng = targetOrder.address.longitude;
+      const distKm = getDistanceKm(boyLat, boyLng, orderLat, orderLng);
+
+      if (distKm > 10) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: `Cannot accept order. Order location is ${distKm.toFixed(1)} km away from your location (maximum allowed distance is 10 km).`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     const alreadyAssigned = await DeliveryAssignment.findOne({
-      assignedTo: deliveryBoyId,
+      assignedTo: deliveryBoy._id,
       status: "assigned",
       _id: { $ne: assignment._id },
     });
@@ -80,7 +113,7 @@ export async function GET(
       );
     }
 
-    assignment.assignedTo = deliveryBoyId;
+    assignment.assignedTo = deliveryBoy._id;
     assignment.status = "assigned";
     assignment.acceptedAt = new Date();
     await assignment.save();
@@ -117,12 +150,16 @@ export async function GET(
       }
 
       // Notify admin and user about order status and assigned delivery partner
+      // Notify admin and user about order status and assigned delivery partner
       await emitEventHandler("order-status-update", {
         orderId: order._id,
         status: order.status,
         assignedDeliveryBoy: order.assignedDeliveryBoy,
       });
     }
+
+    // Broadcast event so other delivery boys immediately remove this assignment from their lists
+    await emitEventHandler("remove-assignment", { assignmentId: assignment._id.toString() });
 
     await DeliveryAssignment.updateMany(
       {
