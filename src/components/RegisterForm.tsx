@@ -22,7 +22,12 @@ type propType = {
 const RegisterForm = ({ previousStep }: propType) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const rawCallbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = rawCallbackUrl.startsWith("http://localhost") || rawCallbackUrl.startsWith("https://localhost")
+    ? "/"
+    : rawCallbackUrl.startsWith("/")
+    ? rawCallbackUrl
+    : "/";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

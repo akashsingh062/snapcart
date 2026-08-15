@@ -13,7 +13,12 @@ type propType = {
 const LoginForm = ({ previousStep }: propType) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const rawCallbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = rawCallbackUrl.startsWith("http://localhost") || rawCallbackUrl.startsWith("https://localhost")
+    ? "/"
+    : rawCallbackUrl.startsWith("/")
+    ? rawCallbackUrl
+    : "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

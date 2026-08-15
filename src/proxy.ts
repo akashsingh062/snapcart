@@ -16,7 +16,7 @@ export default async function proxy(req: NextRequest) {
   // 1. If trying to access a protected route and NOT authenticated, redirect to login
   if (!isPublicRoute && !sessionToken) {
     const loginUrl = new URL("/auth/login", req.url);
-    loginUrl.searchParams.set("callbackUrl", req.url);
+    loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname + req.nextUrl.search);
     return NextResponse.redirect(loginUrl);
   }
 
