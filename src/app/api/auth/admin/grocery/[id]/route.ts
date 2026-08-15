@@ -90,7 +90,6 @@ export async function PUT(
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Update grocery error:", error);
     return NextResponse.json(
       {
         success: false,
@@ -101,7 +100,6 @@ export async function PUT(
   }
 }
 
-// DELETE: Remove a grocery item by ID
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -144,7 +142,6 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Delete grocery error:", error);
     return NextResponse.json(
       {
         success: false,

@@ -52,8 +52,8 @@ export async function POST(
               const dist = getDistanceKm(latitude, longitude, boyLat, boyLng);
               return dist <= 10;
             });
-          } catch (err) {
-            console.error("Geo search error:", err);
+          } catch {
+            // Geo search fallback
           }
         }
 

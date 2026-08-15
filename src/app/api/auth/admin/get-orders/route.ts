@@ -11,10 +11,9 @@ export async function GET() {
       .populate("assignedDeliveryBoy", "name email mobile")
       .sort({ createdAt: -1 });
     return NextResponse.json({ success: true, orders });
-  } catch (error) {
-    console.log(error);
+  } catch {
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: "Failed to fetch orders" },
       { status: 500 }
     );
   }
@@ -48,8 +47,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true, order: updatedOrder });
-  } catch (error) {
-    console.log(error);
+  } catch {
     return NextResponse.json(
       { error: "Failed to update order status" },
       { status: 500 }

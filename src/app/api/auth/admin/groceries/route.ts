@@ -44,7 +44,6 @@ export async function GET(req: NextRequest) {
       { status: 200 }
     );
   } catch (error: unknown) {
-    console.error("Fetch groceries error:", error);
     return NextResponse.json(
       {
         success: false,
