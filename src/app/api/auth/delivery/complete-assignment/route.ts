@@ -38,12 +38,14 @@ async function completeAssignment(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     let assignmentId = searchParams.get("assignmentId");
+    let otpToVerify = searchParams.get("otp");
 
-    if (!assignmentId && req.method === "POST") {
+    if (req.method === "POST") {
       try {
         const body = await req.json();
-        assignmentId = body.assignmentId;
-      } catch (e) {
+        if (!assignmentId) assignmentId = body.assignmentId;
+        if (!otpToVerify) otpToVerify = body.otp;
+      } catch {
         // Body optional
       }
     }
@@ -74,21 +76,45 @@ async function completeAssignment(req: NextRequest) {
       );
     }
 
+    const order = await Order.findById(assignment.order);
+    if (!order) {
+      return NextResponse.json(
+        { success: false, message: "Associated order not found" },
+        { status: 404 }
+      );
+    }
+
+    if (!order.deliveryOtpVerification) {
+      if (
+        otpToVerify &&
+        order.deliveryOtp &&
+        order.deliveryOtp.trim() === String(otpToVerify).trim()
+      ) {
+        order.deliveryOtpVerification = true;
+      } else {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "OTP verification required before marking delivery as completed.",
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     assignment.status = "completed";
     await assignment.save();
 
-    const order = await Order.findById(assignment.order);
-    if (order) {
-      order.status = "delivered";
-      order.isPaid = true;
-      await order.save();
+    order.status = "delivered";
+    order.isPaid = true;
+    order.deliveredAt = new Date();
+    await order.save();
 
-      await emitEventHandler("order-status-update", {
-        orderId: order._id,
-        status: order.status,
-        isPaid: true,
-      });
-    }
+    await emitEventHandler("order-status-update", {
+      orderId: order._id,
+      status: order.status,
+      isPaid: true,
+    });
 
     return NextResponse.json(
       {
