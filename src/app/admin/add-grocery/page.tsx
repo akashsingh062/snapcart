@@ -310,7 +310,7 @@ const AddGroceryPage = () => {
                 onDragLeave={handleDrag}
                 onDrop={handleDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 relative min-h-[200px] overflow-hidden ${
+                className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 relative min-h-50 overflow-hidden ${
                   dragActive 
                     ? "border-green-600 bg-green-50/20" 
                     : "border-slate-200 bg-slate-50/50 hover:border-green-500 hover:bg-green-50/5"

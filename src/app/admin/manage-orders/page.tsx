@@ -2,13 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import {
-  CheckCircle2,
-  Clock,
   Loader2,
-  Package,
   PackageX,
   Search,
-  Truck,
 } from "lucide-react";
 import axios from "axios";
 import AdminOrderCard, { IOrder, IUserRef } from "@/components/AdminOrderCard";
