@@ -10,8 +10,10 @@ export default async function proxy(req: NextRequest) {
     pathname.startsWith(route),
   );
 
-  // Get the session token from cookies (Better-Auth uses this name by default)
-  const sessionToken = req.cookies.get("better-auth.session_token")?.value;
+  // Get the session token from cookies (handles both HTTP localhost and HTTPS production)
+  const sessionToken =
+    req.cookies.get("better-auth.session_token")?.value ||
+    req.cookies.get("__Secure-better-auth.session_token")?.value;
 
   // 1. If trying to access a protected route and NOT authenticated, redirect to login
   if (!isPublicRoute && !sessionToken) {
@@ -34,13 +36,13 @@ export default async function proxy(req: NextRequest) {
     headers: req.headers,
   });
   const role = session?.user?.role;
-  if (pathname.includes("admin") && role !== "admin") {
+  if (pathname.startsWith("/admin") && role !== "admin") {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
-  if (pathname.includes("user") && role !== "user") {
+  if (pathname.startsWith("/user") && role !== "user") {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
-  if (pathname.includes("dilevery") && role !== "dileveryBoy") {
+  if (pathname.startsWith("/delivery") && role !== "deliveryBoy" && role !== "delivery-boy") {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 
