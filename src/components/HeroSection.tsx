@@ -15,7 +15,7 @@ const HeroSection = () => {
     {
       id: 1,
       icon: (
-        <Leaf className="w-20 h-20 sm:w-24 text-green-400 drop-shadow-lg" />
+        <Leaf className="w-20 h-20 sm:w-24 text-emerald-400 drop-shadow-lg" />
       ),
       title: "Fresh Organic Groceries",
       subtitle:
@@ -26,7 +26,7 @@ const HeroSection = () => {
     {
       id: 2,
       icon: (
-        <Truck className="w-20 h-20 sm:w-24 text-green-400 drop-shadow-lg" />
+        <Truck className="w-20 h-20 sm:w-24 text-emerald-400 drop-shadow-lg" />
       ),
       title: "Fast Delivery",
       subtitle: "Get your groceries delivered to your doorstep in no time.",
@@ -36,7 +36,7 @@ const HeroSection = () => {
     {
       id: 3,
       icon: (
-        <Smartphone className="w-20 h-20 sm:w-24 text-green-400 drop-shadow-lg" />
+        <Smartphone className="w-20 h-20 sm:w-24 text-emerald-400 drop-shadow-lg" />
       ),
       title: "Easy Shopping",
       subtitle: "Shop for groceries with ease from our app.",
@@ -63,7 +63,7 @@ const HeroSection = () => {
   }, [current, slides.length]);
 
   return (
-    <div className="w-[95%] max-w-7xl mx-auto mt-28 relative h-112.5 md:h-137.5 overflow-hidden rounded-3xl shadow-2xl group bg-slate-950">
+    <div className="w-[95%] sm:w-[90%] md:w-[85%] max-w-6xl mx-auto mt-28 relative h-112.5 md:h-137.5 overflow-hidden rounded-3xl shadow-2xl group bg-slate-950">
       {/* Slide Container */}
       <AnimatePresence>
         <motion.div
@@ -117,10 +117,11 @@ const HeroSection = () => {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
               transition={{ delay: 0.6, duration: 0.4 }}
-              className="bg-green-600 hover:bg-green-700 text-white font-bold px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-lg hover:shadow-green-600/30 transition-all duration-300 w-fit cursor-pointer flex items-center gap-2 text-sm sm:text-base border border-transparent"
+              onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-lg hover:shadow-emerald-600/30 transition-all duration-300 w-fit cursor-pointer flex items-center gap-2 text-sm sm:text-base border border-transparent"
             >
               {slides[current].btnText}
-              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />            
             </motion.button>
           </div>
         </motion.div>
@@ -150,7 +151,7 @@ const HeroSection = () => {
             onClick={() => setCurrent(index)}
             className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
               current === index
-                ? "w-8 bg-green-500 shadow-md shadow-green-500/50"
+                ? "w-8 bg-emerald-500 shadow-md shadow-emerald-500/50"
                 : "w-2.5 bg-white/40 hover:bg-white/70"
             }`}
           />

@@ -26,7 +26,12 @@ export interface IOrder {
   };
   assignment?:mongoose.Types.ObjectId;
   assignedDeliveryBoy?:mongoose.Types.ObjectId;
-  status: "pending" | "out of delivery" | "delivered";
+  status:
+    | "pending"
+    | "out of delivery"
+    | "delivered"
+    | "cannot be delivered"
+    | "order cannot be delivered";
   createdAt?: Date;
   updatedAt?: Date;
   deliveryOtp:string|null,
@@ -129,7 +134,13 @@ const orderSchema = new mongoose.Schema<IOrder>(
     },
     status: {
       type: String,
-      enum: ["pending", "out of delivery", "delivered"],
+      enum: [
+        "pending",
+        "out of delivery",
+        "delivered",
+        "cannot be delivered",
+        "order cannot be delivered",
+      ],
       default: "pending",
     },
     deliveryOtp:{
@@ -149,6 +160,10 @@ const orderSchema = new mongoose.Schema<IOrder>(
     timestamps: true,
   }
 );
+
+if (mongoose.models && mongoose.models.Order) {
+  delete (mongoose.models as Record<string, unknown>).Order;
+}
 
 const Order = mongoose.models.Order || mongoose.model<IOrder>("Order", orderSchema);
 export default Order;

@@ -1,5 +1,6 @@
 "use client"
 import React, { useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Apple,
   Milk,
@@ -20,8 +21,14 @@ import {
   ChevronRight
 } from "lucide-react"
 import { motion } from 'motion/react'
-const CategorySilder = () => {
+
+interface CategorySliderProps {
+  selectedCategory?: string;
+}
+
+const CategorySilder = ({ selectedCategory }: CategorySliderProps) => {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
 
   const categories = [
     {
@@ -109,13 +116,22 @@ const CategorySilder = () => {
     }
   }
 
+  const handleCategoryClick = (categoryName: string) => {
+    if (selectedCategory === categoryName) {
+      router.push('/')
+    } else {
+      router.push(`/?category=${encodeURIComponent(categoryName)}`)
+    }
+  }
+
   return (
     <motion.div
-    initial={{opacity:0, y:50}}
-    whileInView={{opacity:1, y :0}}
-    transition={{duration:0.6}}
-    viewport={{once:false, amount:0.5}} 
-     className="w-[95%] max-w-7xl mx-auto my-12 relative px-4">
+      initial={{ opacity: 0, y: 50 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      viewport={{ once: false, amount: 0.5 }} 
+      className="w-[95%] sm:w-[90%] md:w-[85%] max-w-6xl mx-auto my-12 relative px-4"
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -153,20 +169,31 @@ const CategorySilder = () => {
       >
         {categories.map((category, index) => {
           const Icon = category.icon
+          const isSelected = selectedCategory === category.name
           return (
-            <div
+            <button
               key={index}
-              className="flex-none w-32 sm:w-36 snap-start flex flex-col items-center text-center cursor-pointer group"
+              type="button"
+              onClick={() => handleCategoryClick(category.name)}
+              className="flex-none w-32 sm:w-36 snap-start flex flex-col items-center text-center cursor-pointer group bg-transparent border-0 outline-none focus:outline-none"
             >
               <div
-                className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center border transition-all duration-300 shadow-xs group-hover:shadow-md group-hover:-translate-y-1.5 ${category.bgColor}`}
+                className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center border transition-all duration-300 shadow-xs group-hover:shadow-md group-hover:-translate-y-1.5 ${
+                  isSelected
+                    ? "ring-3 ring-emerald-600 ring-offset-2 scale-105 shadow-md bg-emerald-100 border-emerald-300 text-emerald-700"
+                    : category.bgColor
+                }`}
               >
                 <Icon className="w-8 h-8 sm:w-10 sm:h-10 transition-transform duration-300 group-hover:scale-110" />
               </div>
-              <span className="mt-3 text-xs sm:text-sm font-semibold text-slate-700 group-hover:text-slate-900 line-clamp-2 px-1 transition-colors duration-200">
+              <span
+                className={`mt-3 text-xs sm:text-sm font-semibold line-clamp-2 px-1 transition-colors duration-200 ${
+                  isSelected ? "text-emerald-700 font-bold" : "text-slate-700 group-hover:text-slate-900"
+                }`}
+              >
                 {category.name}
               </span>
-            </div>
+            </button>
           )
         })}
       </div>

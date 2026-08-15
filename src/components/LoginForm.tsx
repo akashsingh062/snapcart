@@ -39,9 +39,6 @@ const LoginForm = ({ previousStep }: propType) => {
           rememberMe: true,
         },
         {
-          onRequest: (ctx: unknown) => {
-            console.log("Making request...", ctx);
-          },
           onSuccess: () => {
             router.push(callbackUrl);
             router.refresh();
@@ -76,8 +73,8 @@ const LoginForm = ({ previousStep }: propType) => {
         provider: "google",
         callbackURL: callbackUrl,
       });
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setError("Failed to sign in with Google. Please try again.");
     }
   };
 

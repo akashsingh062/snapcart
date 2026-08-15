@@ -8,14 +8,17 @@ import {
   User,
   X,
   PlusCircle,
-  LayoutGrid,
   ClipboardList,
+  ShieldCheck,
   Menu,
+  Truck,
+  TrendingUp,
+  Leaf,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { createPortal } from "react-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -35,13 +38,39 @@ interface IUser {
 const Nav = ({ user }: { user: IUser }) => {
   const dispatch = useDispatch();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [searchBarOpen, setSearchBarOpen] = useState(false);
+  const urlSearch = searchParams?.get("search") || "";
+  const [searchQuery, setSearchQuery] = useState(urlSearch);
+  const [prevUrlSearch, setPrevUrlSearch] = useState(urlSearch);
+
+  if (urlSearch !== prevUrlSearch) {
+    setPrevUrlSearch(urlSearch);
+    setSearchQuery(urlSearch);
+  }
+
   const profileDropDown = useRef<HTMLDivElement>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const {cartData} = useSelector((state:RootState)=>state.cart)
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = searchQuery.trim();
+    if (trimmed) {
+      router.push(`/?search=${encodeURIComponent(trimmed)}`);
+    } else {
+      router.push("/");
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    router.push("/");
+  };
 
   useEffect(() => {
     if (user) {
@@ -87,42 +116,44 @@ const Nav = ({ user }: { user: IUser }) => {
           },
         },
       });
-    } catch (error) {
-      console.error("Signout failed:", error);
+    } catch {
+      // Ignored
     }
   };
 
-  const sidebar = mounted && typeof window !== "undefined"
-    ? createPortal(
-        <AnimatePresence>
-          {menuOpen && (
-            <>
-              {/* Dark backdrop overlay */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setMenuOpen(false)}
-                className="fixed inset-0 bg-black/60 backdrop-blur-xs z-60"
-              />
+  const deliveryNavItems = [
+    { name: "Requests", href: "/", icon: Package },
+    { name: "Active Task", href: "/delivery/current-order", icon: Truck },
+    { name: "Progress", href: "/delivery/progress", icon: TrendingUp },
+  ];
 
-              {/* Sidebar container */}
-              <motion.div
-                initial={{ x: "100%", opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: "100%", opacity: 0 }}
-                transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="fixed top-0 right-0 h-full w-70 sm:w-[320px] bg-slate-950 text-white z-70 shadow-2xl p-6 flex flex-col justify-between overflow-y-auto border-l border-slate-800"
-              >
-                <div>
-                  {/* Header */}
-                  <div className="flex items-center justify-between pb-6 border-b border-slate-800">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-linear-to-tr from-green-600 to-emerald-400 flex items-center justify-center font-bold text-white shadow-md">
-                        {user.name ? user.name[0].toUpperCase() : "U"}
+  if (user.role === "deliveryBoy") {
+    const deliverySidebar = mounted && typeof window !== "undefined"
+      ? createPortal(
+          <AnimatePresence>
+            {menuOpen && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setMenuOpen(false)}
+                  className="fixed inset-0 bg-black/40 z-60"
+                />
+                <motion.div
+                  initial={{ x: "100%" }}
+                  animate={{ x: 0 }}
+                  exit={{ x: "100%" }}
+                  transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                  className="fixed top-0 right-0 h-full w-72 bg-white z-70 shadow-xl border-l border-slate-200 flex flex-col"
+                >
+                  <div className="flex items-center justify-between p-4 border-b border-slate-100">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center text-sm font-semibold">
+                        {user.name ? user.name[0].toUpperCase() : "D"}
                       </div>
                       <div className="overflow-hidden">
-                        <p className="font-bold text-sm truncate text-slate-100">
+                        <p className="font-medium text-sm text-slate-900 truncate">
                           {user.name}
                         </p>
                         <p className="text-xs text-slate-400 truncate">
@@ -132,61 +163,264 @@ const Nav = ({ user }: { user: IUser }) => {
                     </div>
                     <button
                       onClick={() => setMenuOpen(false)}
-                      className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition-colors"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
                     >
-                      <X className="w-5 h-5" />
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
 
-                  {/* Navigation Links */}
-                  <div className="py-6 space-y-2">
-                    {user.role === "user" && (
-                      <>
+                  <div className="flex-1 p-3 space-y-1">
+                    {deliveryNavItems.map((item) => {
+                      const isActive = pathname === item.href;
+                      const Icon = item.icon;
+                      return (
                         <Link
-                          href="/user/my-orders"
+                          key={item.href}
+                          href={item.href}
                           onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-900 text-slate-300 hover:text-white transition-all duration-200 text-sm font-semibold group"
+                          className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg transition-colors text-sm ${
+                            isActive
+                              ? "bg-emerald-50 text-emerald-700 font-semibold"
+                              : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium"
+                          }`}
                         >
-                          <Package className="w-5 h-5 text-slate-500 group-hover:text-green-500 transition-colors" />
-                          <span>My Orders</span>
+                          <Icon className="w-4 h-4" />
+                          <span>{item.name}</span>
                         </Link>
-                      </>
-                    )}
-
-                    {user.role === "admin" && (
-                      <>
-                        <Link
-                          href="/admin/add-grocery"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-900 text-slate-300 hover:text-white transition-all duration-200 text-sm font-semibold group"
-                        >
-                          <PlusCircle className="w-5 h-5 text-slate-500 group-hover:text-green-500 transition-colors" />
-                          <span>Add Grocery</span>
-                        </Link>
-                        <Link
-                          href="/admin/manage-orders"
-                          onClick={() => setMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-slate-900 text-slate-300 hover:text-white transition-all duration-200 text-sm font-semibold group"
-                        >
-                          <ClipboardList className="w-5 h-5 text-slate-500 group-hover:text-green-500 transition-colors" />
-                          <span>Manage Orders</span>
-                        </Link>
-                      </>
-                    )}
+                      );
+                    })}
                   </div>
+
+                  <div className="p-3 border-t border-slate-100">
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-600 font-medium text-sm transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Log out</span>
+                    </button>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>,
+          document.body
+        )
+      : null;
+
+    return (
+      <>
+        <GeoUpdater />
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200">
+          <div className="w-[95%] max-w-4xl mx-auto h-14 flex items-center justify-between">
+            {/* Brand */}
+            <Link
+              href="/"
+              className="text-slate-900 font-bold text-lg tracking-tight flex items-center gap-2"
+            >
+              Snapcart
+              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                Delivery
+              </span>
+            </Link>
+
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center gap-1">
+              {deliveryNavItems.map((item) => {
+                const isActive = pathname === item.href;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                      isActive
+                        ? "text-emerald-700 bg-emerald-50 font-semibold"
+                        : "text-slate-500 hover:text-slate-900 hover:bg-slate-50 font-medium"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Right side */}
+            <div className="flex items-center gap-3">
+              <button
+                className="md:hidden p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                onClick={() => setMenuOpen(true)}
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+
+              <div
+                ref={profileDropDown}
+                onClick={() => setOpen(!open)}
+                className="relative hidden md:block"
+              >
+                {user.image ? (
+                  <Image
+                    className="rounded-full border border-slate-200 hover:border-slate-300 transition cursor-pointer object-cover"
+                    src={user.image}
+                    alt="profile"
+                    width={32}
+                    height={32}
+                  />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-sm font-semibold cursor-pointer hover:bg-slate-200 transition">
+                    {user.name ? user.name[0].toUpperCase() : "D"}
+                  </div>
+                )}
+
+                <AnimatePresence>
+                  {open && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 4 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl p-3 z-50 shadow-lg"
+                    >
+                      <div className="flex items-center gap-2.5 pb-3 mb-2 border-b border-slate-100">
+                        <div className="w-8 h-8 relative rounded-full bg-slate-100 flex items-center justify-center overflow-hidden">
+                          {user.image ? (
+                            <Image
+                              src={user.image}
+                              alt="user"
+                              fill
+                              className="object-cover"
+                            />
+                          ) : (
+                            <User className="text-slate-500 w-4 h-4" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-slate-900 font-medium text-sm truncate">
+                            {user.name}
+                          </p>
+                          <p className="text-slate-400 text-xs truncate">
+                            Delivery Partner
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-red-50 text-slate-600 hover:text-red-600 transition-colors text-sm font-medium cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Log out</span>
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+        </nav>
+        {deliverySidebar}
+      </>
+    );
+  }
+
+  const sidebar = mounted && typeof window !== "undefined"
+    ? createPortal(
+        <AnimatePresence>
+          {menuOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMenuOpen(false)}
+                className="fixed inset-0 bg-black/40 z-60"
+              />
+              <motion.div
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="fixed top-0 right-0 h-full w-72 bg-white z-70 shadow-xl border-l border-slate-200 flex flex-col"
+              >
+                <div className="flex items-center justify-between p-4 border-b border-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center text-sm font-semibold">
+                      {user.name ? user.name[0].toUpperCase() : "U"}
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="font-medium text-sm text-slate-900 truncate">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-slate-400 truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setMenuOpen(false)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
 
-                {/* Logout Button */}
-                <div className="pt-6 border-t border-slate-800">
+                <div className="flex-1 p-3 space-y-1">
+                  {user.role === "user" && (
+                    <Link
+                      href="/user/my-orders"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors text-sm font-medium"
+                    >
+                      <Package className="w-4 h-4" />
+                      <span>My Orders</span>
+                    </Link>
+                  )}
+
+                  {user.role === "admin" && (
+                    <>
+                      <Link
+                        href="/admin"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors text-sm font-medium"
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>Admin Dashboard</span>
+                      </Link>
+                      <Link
+                        href="/admin/manage-orders"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors text-sm font-medium"
+                      >
+                        <ClipboardList className="w-4 h-4" />
+                        <span>Manage Orders</span>
+                      </Link>
+                      <Link
+                        href="/admin/add-grocery"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors text-sm font-medium"
+                      >
+                        <PlusCircle className="w-4 h-4" />
+                        <span>Add Grocery</span>
+                      </Link>
+                    </>
+                  )}
+                </div>
+
+                <div className="p-3 border-t border-slate-100">
                   <button
                     onClick={() => {
                       setMenuOpen(false);
                       handleLogout();
                     }}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 font-semibold text-sm transition-all duration-200 border border-red-500/20"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-600 font-medium text-sm transition-colors cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" />
-                    <span>Log Out</span>
+                    <span>Log out</span>
                   </button>
                 </div>
               </motion.div>
@@ -196,198 +430,252 @@ const Nav = ({ user }: { user: IUser }) => {
         document.body
       )
     : null;
+
   return (
     <>
       <GeoUpdater />
-      <div className="w-[95%] fixed top-4 left-1/2 -translate-x-1/2 bg-linear-to-r from-green-500 to-green-700 rounded-2xl shadow-lg shadow-black/30 flex justify-between items-center h-20 px-4 md:px-8 z-50">
-      <Link
-        href="/"
-        className="text-white font-extrabold text-2xl sm:text-3xl tracking-wide hover:scale-105 transition-transform duration-300"
-      >
-        Snapcart
-      </Link>
+      <nav className="fixed top-4 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl z-50 bg-green-600 rounded-2xl shadow-lg shadow-emerald-900/25 h-16 flex items-center justify-between px-4 md:px-6">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 text-white font-extrabold text-xl tracking-tight hover:opacity-90 transition-opacity"
+        >
+          <div className="w-8 h-8 rounded-xl bg-white/20 border border-white/25 flex items-center justify-center shadow-xs">
+            <Leaf className="w-4 h-4 text-white" />
+          </div>
+          <span>Snapcart</span>
+        </Link>
 
-      {user.role === "user" && (
-        <form className="hidden md:flex items-center bg-white rounded-full px-4 py-2 w-1/2 max-w-lg shadow-sm focus-within:shadow-md transition-shadow duration-300">
-          <Search className="text-gray-500 w-5 h-5 mr-2 " />
-          <input
-            type="text"
-            placeholder="search groceries..."
-            className="outline-none w-full text-gray-700 placeholder:text-gray-500"
-          />
-        </form>
-      )}
-
-      <div className="flex items-center gap-3 md:gap-6 relative">
-        {/* Mobile Search Icon & Dropdown */}
         {user.role === "user" && (
-          <>
-            <div ref={searchContainerRef} className="relative md:hidden">
-              <motion.div
-                onClick={() => setSearchBarOpen(!searchBarOpen)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="bg-white rounded-full w-11 h-11 flex items-center justify-center shadow-md cursor-pointer transition duration-300"
-              >
-                <Search className="text-green-600 w-6 h-6" />
-              </motion.div>
-
-              <AnimatePresence>
-                {searchBarOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
-                    className="absolute right-0 mt-4 w-72 bg-white/95 backdrop-blur-md border border-slate-100 shadow-2xl rounded-2xl p-3 z-50 flex items-center"
-                  >
-                    <form className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 w-full focus-within:ring-2 focus-within:ring-green-500/20 focus-within:border-green-600 transition-all">
-                      <Search className="text-slate-400 w-4 h-4 mr-2" />
-                      <input
-                        type="text"
-                        name="search"
-                        id="search"
-                        placeholder="Search groceries..."
-                        className="outline-none w-full text-slate-800 placeholder:text-slate-400 text-sm bg-transparent"
-                        autoFocus
-                      />
-                    </form>
-                    <button onClick={() => setSearchBarOpen(false)}>
-                      <X className="text-slate-400 w-4 h-4 ml-2" />
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <Link
-              href={"/user/cart"}
-              className="relative bg-white rounded-full w-11 h-11 flex items-center justify-center shadow-md hover:scale-105 transition"
+          <form
+            onSubmit={handleSearchSubmit}
+            className="hidden md:flex items-center bg-white/95 rounded-xl px-3.5 py-2 w-full max-w-md mx-6 focus-within:ring-2 focus-within:ring-white/30 transition-all"
+          >
+            <button
+              type="submit"
+              className="text-slate-400 hover:text-emerald-600 transition-colors mr-2 cursor-pointer"
+              aria-label="Search"
             >
-              <ShoppingCart className="text-green-600 w-6 h-6" />
-              <span className="absolute -top-1 -right-1 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-semibold shadow">
-                {cartData.length}
-              </span>
-            </Link>
-          </>
+              <Search className="w-4 h-4" />
+            </button>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search groceries..."
+              className="outline-none w-full text-slate-700 placeholder:text-slate-400 text-sm bg-transparent"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="text-slate-400 hover:text-slate-600 transition-colors ml-1 cursor-pointer"
+                aria-label="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </form>
         )}
 
         {user.role === "admin" && (
-          <div className="hidden sm:flex items-center gap-1 md:gap-3 mr-2 md:mr-4">
+          <div className="hidden sm:flex items-center gap-1 mx-6">
             <Link
-              href={"/admin/add-grocery"}
-              className="flex items-center gap-1.5 text-white/90 hover:text-white hover:bg-white/10 px-3 py-2 rounded-xl text-xs md:text-sm font-bold tracking-wide transition-all duration-200 active:scale-95"
+              href="/admin"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
+                pathname === "/admin"
+                  ? "bg-white/20 text-white font-semibold"
+                  : "text-white/70 hover:text-white hover:bg-white/10 font-medium"
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Dashboard</span>
+            </Link>
+            <Link
+              href="/admin/manage-orders"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
+                pathname === "/admin/manage-orders"
+                  ? "bg-white/20 text-white font-semibold"
+                  : "text-white/70 hover:text-white hover:bg-white/10 font-medium"
+              }`}
+            >
+              <ClipboardList className="w-4 h-4" />
+              <span>Orders</span>
+            </Link>
+            <Link
+              href="/admin/add-grocery"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
+                pathname === "/admin/add-grocery"
+                  ? "bg-white/20 text-white font-semibold"
+                  : "text-white/70 hover:text-white hover:bg-white/10 font-medium"
+              }`}
             >
               <PlusCircle className="w-4 h-4" />
               <span>Add Grocery</span>
             </Link>
-            <Link
-              href={"/admin/view-groceries"}
-              className="flex items-center gap-1.5 text-white/90 hover:text-white hover:bg-white/10 px-3 py-2 rounded-xl text-xs md:text-sm font-bold tracking-wide transition-all duration-200 active:scale-95"
-            >
-              <LayoutGrid className="w-4 h-4" />
-              <span>View Groceries</span>
-            </Link>
-            <Link
-              href={"/admin/manage-orders"}
-              className="flex items-center gap-1.5 text-white/90 hover:text-white hover:bg-white/10 px-3 py-2 rounded-xl text-xs md:text-sm font-bold tracking-wide transition-all duration-200 active:scale-95"
-            >
-              <ClipboardList className="w-4 h-4" />
-              <span>Manage Orders</span>
-            </Link>
           </div>
         )}
 
-        <div>
-          <Menu
-            className="w-6 h-6 md:hidden text-white cursor-pointer hover:scale-105 active:scale-95 transition-transform"
-            onClick={() => setMenuOpen(true)}
-          />
-        </div>
-
-        <div
-          ref={profileDropDown}
-          onClick={() => setOpen(!open)}
-          className="relative hidden md:block"
-        >
-          {user.image ? (
-            <Image
-              className="rounded-full border-2 border-white shadow-md hover:scale-105 transition duration-300 cursor-pointer object-cover"
-              src={user.image}
-              alt="profile"
-              width={44}
-              height={44}
-            />
-          ) : (
-            <div className="w-11 h-11 rounded-full border-2 border-white bg-white text-green-700 flex items-center justify-center font-bold shadow-md hover:scale-105 transition duration-300 cursor-pointer">
-              {user.name ? user.name[0].toUpperCase() : "U"}
-            </div>
-          )}
-          <AnimatePresence>
-            {open && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="absolute right-0 mt-4 w-64 bg-white/95 backdrop-blur-md border border-slate-100 shadow-2xl rounded-2xl p-4 z-50 flex flex-col gap-1"
-              >
-                {/* User Info Header */}
-                <div className="flex items-center gap-3 pb-3 mb-2 border-b border-slate-100">
-                  <div className="w-10 h-10 relative rounded-full bg-green-100 flex items-center justify-center overflow-hidden border border-slate-200">
-                    {user.image ? (
-                      <Image
-                        src={user.image}
-                        alt="user"
-                        fill
-                        className="object-cover"
-                      />
-                    ) : (
-                      <User className="text-green-700 w-5 h-5" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-slate-800 font-bold text-sm truncate">
-                      {user.name}
-                    </div>
-                    <div className="text-slate-400 text-xs font-semibold capitalize tracking-wide">
-                      {user.role}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dropdown Menu Items */}
-                {user.role === "user" && (
-                  <Link
-                    href="/user/my-orders"
-                    onClick={() => setOpen(false)}
-                    className="group flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-green-50/50 text-slate-700 hover:text-green-700 transition-all duration-200 text-sm font-medium"
-                  >
-                    <Package className="w-5 h-5 text-slate-400 group-hover:text-green-600 transition-colors" />
-                    <span>My Orders</span>
-                  </Link>
-                )}
-
-                <div className="border-t border-slate-100 my-1" />
-
-                {/* Logout Button */}
+        <div className="flex items-center gap-2">
+          {user.role === "user" && (
+            <>
+              <div ref={searchContainerRef} className="relative md:hidden">
                 <button
-                  onClick={handleLogout}
-                  className="group flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-red-50 text-slate-700 hover:text-red-600 transition-all duration-200 text-sm font-medium text-left cursor-pointer"
+                  type="button"
+                  onClick={() => setSearchBarOpen(!searchBarOpen)}
+                  className="w-9 h-9 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-white hover:bg-white/25 transition-colors cursor-pointer"
+                  aria-label="Toggle search"
                 >
-                  <LogOut className="w-5 h-5 text-slate-400 group-hover:text-red-500 transition-colors" />
-                  <span>Log Out</span>
+                  <Search className="w-4 h-4" />
                 </button>
-              </motion.div>
+
+                <AnimatePresence>
+                  {searchBarOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 mt-3 w-72 bg-white border border-slate-200 shadow-xl rounded-2xl p-3 z-50"
+                    >
+                      <form
+                        onSubmit={(e) => {
+                          handleSearchSubmit(e);
+                          setSearchBarOpen(false);
+                        }}
+                        className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 w-full focus-within:border-emerald-500 transition-all"
+                      >
+                        <button
+                          type="submit"
+                          className="text-slate-400 hover:text-emerald-600 transition-colors mr-2 cursor-pointer"
+                          aria-label="Search"
+                        >
+                          <Search className="w-4 h-4" />
+                        </button>
+                        <input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Search groceries..."
+                          className="outline-none w-full text-slate-700 placeholder:text-slate-400 text-sm bg-transparent"
+                          autoFocus
+                        />
+                        {searchQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setSearchQuery("")}
+                            className="text-slate-400 hover:text-slate-600 ml-1 cursor-pointer"
+                            aria-label="Clear"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </form>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <Link
+                href="/user/cart"
+                className="relative w-9 h-9 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-white hover:bg-white/25 transition-colors"
+              >
+                <ShoppingCart className="w-4 h-4" />
+                {cartData.length > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 bg-white text-emerald-700 rounded-full w-4.5 h-4.5 flex items-center justify-center text-[10px] font-bold shadow-sm">
+                    {cartData.length}
+                  </span>
+                )}
+              </Link>
+            </>
+          )}
+
+          <button
+            className="md:hidden w-9 h-9 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center text-white hover:bg-white/25 transition-colors cursor-pointer"
+            onClick={() => setMenuOpen(true)}
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+
+          <div
+            ref={profileDropDown}
+            onClick={() => setOpen(!open)}
+            className="relative hidden md:block"
+          >
+            {user.image ? (
+              <Image
+                className="rounded-full border-2 border-white/30 hover:border-white/60 transition cursor-pointer object-cover"
+                src={user.image}
+                alt="profile"
+                width={34}
+                height={34}
+              />
+            ) : (
+              <div className="w-8.5 h-8.5 rounded-full bg-white/20 border border-white/30 text-white flex items-center justify-center text-sm font-semibold cursor-pointer hover:bg-white/30 transition">
+                {user.name ? user.name[0].toUpperCase() : "U"}
+              </div>
             )}
-          </AnimatePresence>
+
+            <AnimatePresence>
+              {open && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl p-3 z-50 shadow-lg"
+                >
+                  <div className="flex items-center gap-2.5 pb-3 mb-2 border-b border-slate-100">
+                    <div className="w-8 h-8 relative rounded-full bg-emerald-50 flex items-center justify-center overflow-hidden">
+                      {user.image ? (
+                        <Image
+                          src={user.image}
+                          alt="user"
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <User className="text-emerald-600 w-4 h-4" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-slate-900 font-medium text-sm truncate">
+                        {user.name}
+                      </p>
+                      <p className="text-slate-400 text-xs truncate capitalize">
+                        {user.role}
+                      </p>
+                    </div>
+                  </div>
+
+                  {user.role === "user" && (
+                    <Link
+                      href="/user/my-orders"
+                      onClick={() => setOpen(false)}
+                      className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors text-sm font-medium"
+                    >
+                      <Package className="w-4 h-4" />
+                      <span>My Orders</span>
+                    </Link>
+                  )}
+
+                  <div className="border-t border-slate-100 my-1.5" />
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-red-50 text-slate-600 hover:text-red-600 transition-colors text-sm font-medium cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Log Out</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
-    </div>
-    {sidebar}
-  </>
+      </nav>
+      {sidebar}
+    </>
   );
 };
 
 export default Nav;
-

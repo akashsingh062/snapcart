@@ -148,9 +148,8 @@ const AddGroceryPage = () => {
       } else {
         setError(res.data.error || 'Failed to add grocery item.')
       }
-    } catch (err) {
-      console.error(err)
-      setError('An error occurred during submission. Please try again.')
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.response?.data?.error || 'An error occurred during submission. Please try again.')
     } finally {
       setLoading(false)
     }

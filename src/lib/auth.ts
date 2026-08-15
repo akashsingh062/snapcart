@@ -24,8 +24,8 @@ export const auth = betterAuth({
                 coordinates: [0, 0],
               },
             });
-          } catch (err) {
-            console.error("Error setting default location on user signup:", err);
+          } catch {
+            // Ignored
           }
         },
       },

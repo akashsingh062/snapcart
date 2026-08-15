@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export default async function emitEventHandler(event: string, data: any, socketId?: string) {
+export default async function emitEventHandler(event: string, data: any, socketId?: string): Promise<void> {
   try {
     const socketServerUrl = process.env.NEXT_PUBLIC_SOCKET_SERVER || "http://localhost:4000";
     await axios.post(`${socketServerUrl}/notify`, {
@@ -8,8 +8,7 @@ export default async function emitEventHandler(event: string, data: any, socketI
       event,
       data,
     });
-  } catch (error) {
-    console.error("emitEventHandler error:", error);
+  } catch {
+    // Ignored in background event emission
   }
 }
-

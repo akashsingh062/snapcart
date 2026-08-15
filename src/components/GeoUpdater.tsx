@@ -24,8 +24,8 @@ const GeoUpdater = () => {
           longitude: lng,
         });
       },
-      (error) => {
-        console.error("GeoUpdater position error:", error.message || error);
+      () => {
+        // Location access denied or unavailable
       },
       {
         enableHighAccuracy: true,

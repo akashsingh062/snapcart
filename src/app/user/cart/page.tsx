@@ -37,7 +37,7 @@ const CartPage = () => {
   };
 
   return (
-    <div className="w-[95%] sm:w-[90%] md:w-[85%] max-w-6xl mx-auto pt-24 pb-24 relative min-h-[80vh]">
+    <div className="w-[95%] sm:w-[90%] md:w-[85%] max-w-6xl mx-auto pt-28 pb-24 relative min-h-[80vh]">
       {/* Back Button Link */}
       <motion.div
         initial={{ opacity: 0, x: -10 }}

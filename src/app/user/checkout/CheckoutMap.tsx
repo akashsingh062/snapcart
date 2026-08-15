@@ -110,8 +110,8 @@ const DraggableMarker: React.FC<DraggableMarkerProps> = ({
           state: state || prev.state,
           pincode: pincode || prev.pincode,
         }));
-      } catch (error) {
-        console.log(error);
+      } catch {
+        // Ignored
       }
     };
     if (position) {

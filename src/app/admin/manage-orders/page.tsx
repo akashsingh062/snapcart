@@ -1,11 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { motion } from "motion/react";
 import {
   CheckCircle2,
   Clock,
-  DollarSign,
   Loader2,
   Package,
   PackageX,
@@ -31,8 +29,8 @@ export default function ManageOrders() {
         if (isMounted && res.data?.success && res.data?.orders) {
           setOrders(res.data.orders);
         }
-      } catch (error) {
-        console.error("Failed to fetch orders:", error);
+      } catch {
+        // Failed to fetch orders
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -44,6 +42,7 @@ export default function ManageOrders() {
       isMounted = false;
     };
   }, []);
+
   useEffect(() => {
     const socket = getSocket();
     const handleNewOrder = (newOrder: IOrder) => {
@@ -85,19 +84,27 @@ export default function ManageOrders() {
       socket?.off("order-status-update", handleStatusUpdate);
     };
   }, []);
+
   const handleUpdateStatus = async (orderId: string, newStatus: string) => {
     setUpdatingId(orderId);
     try {
       const res = await axios.post(`/api/auth/admin/update-order-status/${orderId}`, {
         status: newStatus,
       });
-      console.log(res)
+      if (res.data?.message) {
+        alert(res.data.message);
+      }
       setOrders((prev) =>
         prev.map((ord) => (ord._id === orderId ? { ...ord, status: newStatus } : ord))
       );
-    } catch (error) {
-      console.error("Failed to update order status:", error);
-      alert("Failed to update status.");
+    } catch (error: unknown) {
+      const errObj = error as { response?: { data?: { message?: string; error?: string } }; message?: string };
+      const msg =
+        errObj.response?.data?.message ||
+        errObj.response?.data?.error ||
+        errObj.message ||
+        "Order cannot be delivered. Failed to update status.";
+      alert(`⚠️ ${msg}`);
     } finally {
       setUpdatingId(null);
     }
@@ -115,9 +122,8 @@ export default function ManageOrders() {
           prev.map((ord) => (ord._id === orderId ? res.data.order : ord))
         );
       }
-    } catch (error) {
-      console.error("Failed to update payment status:", error);
-      alert("Failed to update payment status.");
+    } catch {
+      alert("Failed to update payment status. Please try again.");
     } finally {
       setUpdatingId(null);
     }
@@ -152,102 +158,65 @@ export default function ManageOrders() {
   const deliveredOrders = orders.filter(
     (o) => o.status.toLowerCase() === "delivered"
   ).length;
-  const totalRevenue = orders.reduce(
-    (acc, o) => acc + (Number(o.totalAmount) || 0),
-    0
-  );
+  const cannotBeDeliveredOrders = orders.filter(
+    (o) => o.status.toLowerCase() === "cannot be delivered"
+  ).length;
+
+  const tabs = ["all", "pending", "out of delivery", "delivered", "cannot be delivered"];
 
   return (
-    <div className="w-[94%] md:w-[88%] mx-auto py-10 min-h-[85vh]">
+    <div className="w-[95%] max-w-5xl mx-auto pt-20 pb-16 space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-extrabold text-green-700 tracking-tight flex items-center gap-3">
-            <Package size={32} /> Admin Manage Orders
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Monitor, update order statuses, and manage customer shipments
-          </p>
-        </div>
+      <div>
+        <h1 className="text-xl font-bold text-slate-900">Orders</h1>
+        <p className="text-slate-400 text-sm mt-0.5">
+          Manage and track all customer orders
+        </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-green-50 text-green-700 flex items-center justify-center shrink-0">
-            <Package size={22} />
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 font-medium">Total Orders</p>
-            <p className="text-xl font-bold text-gray-900">{totalOrders}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-            <Clock size={22} />
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 font-medium">Pending</p>
-            <p className="text-xl font-bold text-gray-900">{pendingOrders}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-            <Truck size={22} />
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 font-medium">Out for Delivery</p>
-            <p className="text-xl font-bold text-gray-900">{outOfDeliveryOrders}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-            <CheckCircle2 size={22} />
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 font-medium">Delivered</p>
-            <p className="text-xl font-bold text-gray-900">{deliveredOrders}</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3 col-span-2 md:col-span-1">
-          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-            <DollarSign size={22} />
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 font-medium">Total Revenue</p>
-            <p className="text-xl font-bold text-gray-900">₹{totalRevenue}</p>
-          </div>
-        </div>
+      {/* Stats Row */}
+      <div className="flex items-center gap-6 text-sm">
+        <span className="text-slate-400">
+          Total <span className="font-semibold text-slate-900">{totalOrders}</span>
+        </span>
+        <span className="text-slate-400">
+          Pending <span className="font-semibold text-amber-600">{pendingOrders}</span>
+        </span>
+        <span className="text-slate-400">
+          Active <span className="font-semibold text-blue-600">{outOfDeliveryOrders}</span>
+        </span>
+        <span className="text-slate-400">
+          Delivered <span className="font-semibold text-emerald-700">{deliveredOrders}</span>
+        </span>
+        {cannotBeDeliveredOrders > 0 && (
+          <span className="text-slate-400">
+            Failed <span className="font-semibold text-rose-600">{cannotBeDeliveredOrders}</span>
+          </span>
+        )}
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-        {/* Search */}
-        <div className="relative w-full md:w-96">
-          <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+      {/* Search + Filter */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="relative w-full sm:w-80">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search by ID, Customer, Phone, City..."
+            placeholder="Search orders..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white border border-gray-200 text-sm focus:outline-none focus:border-green-600 shadow-xs"
+            className="w-full pl-9 pr-3 py-2 rounded-lg bg-white border border-slate-200 text-sm focus:outline-none focus:border-slate-400 transition-colors"
           />
         </div>
 
-        {/* Status Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 scrollbar-none">
-          {["all", "pending", "out of delivery", "delivered"].map((tab) => (
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          {tabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setStatusFilter(tab)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold capitalize transition-all duration-200 cursor-pointer shrink-0 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors cursor-pointer shrink-0 ${
                 statusFilter === tab
-                  ? "bg-green-700 text-white shadow-md shadow-green-700/20"
-                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-100 bg-white border border-slate-200"
               }`}
             >
               {tab}
@@ -258,26 +227,20 @@ export default function ManageOrders() {
 
       {/* Orders List */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <Loader2 size={36} className="animate-spin text-green-700" />
-          <p className="text-gray-500 font-medium text-sm">Loading admin orders...</p>
+        <div className="flex flex-col items-center justify-center py-20 gap-2">
+          <Loader2 size={24} className="animate-spin text-slate-400" />
+          <p className="text-slate-400 text-sm">Loading orders...</p>
         </div>
       ) : filteredOrders.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-3xl p-12 text-center border border-gray-100 shadow-sm max-w-md mx-auto"
-        >
-          <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 text-green-700">
-            <PackageX size={40} />
-          </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">No Matching Orders</h3>
-          <p className="text-gray-500 text-sm">
-            Try adjusting your search query or status filter.
+        <div className="bg-white rounded-xl p-12 text-center border border-slate-200">
+          <PackageX size={32} className="text-slate-300 mx-auto mb-3" />
+          <h3 className="text-base font-semibold text-slate-900 mb-1">No orders found</h3>
+          <p className="text-slate-400 text-sm">
+            Try adjusting your search or filter.
           </p>
-        </motion.div>
+        </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {filteredOrders.map((order) => (
             <AdminOrderCard
               key={order._id}

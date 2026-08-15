@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useEffect, useState, use } from "react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowLeft,
   CheckCircle2,
   Clock,
+  Key,
   Loader2,
   MapPin,
+  MessageSquare,
   Navigation,
   Package,
   Phone,
@@ -19,6 +21,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { getSocket } from "@/lib/socket";
 import LiveTrackingMap from "@/components/LiveTrackingMap";
+import DeliveryChat from "@/components/DeliveryChat";
 
 interface IDeliveryBoy {
   _id: string;
@@ -57,8 +60,10 @@ interface IOrderDetails {
     longitude?: number;
   };
   assignedDeliveryBoy?: IDeliveryBoy | null;
+  user?: { _id: string; name?: string; email?: string } | string;
   status: "pending" | "out of delivery" | "delivered" | string;
   createdAt: string;
+  deliveryOtp?: string | null;
 }
 
 export default function TrackOrderPage({
@@ -76,6 +81,7 @@ export default function TrackOrderPage({
     lat: number;
     lng: number;
   } | null>(null);
+  const [showChatModal, setShowChatModal] = useState<boolean>(false);
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -89,8 +95,8 @@ export default function TrackOrderPage({
             setDriverLocation({ lat, lng });
           }
         }
-      } catch (error) {
-        console.error("Fetch track order error:", error);
+      } catch {
+        // Fetch failed
       } finally {
         setLoading(false);
       }
@@ -99,7 +105,6 @@ export default function TrackOrderPage({
     fetchOrderDetails();
   }, [orderId]);
 
-  // Real-time socket listener for order status and driver location updates
   useEffect(() => {
     const socket = getSocket();
 
@@ -124,14 +129,11 @@ export default function TrackOrderPage({
     };
 
     const handleLocationUpdate = (data: {
-      userId: string;
+      userId?: string;
       latitude: number;
       longitude: number;
     }) => {
-      if (
-        order?.assignedDeliveryBoy &&
-        order.assignedDeliveryBoy._id === data.userId
-      ) {
+      if (typeof data.latitude === "number" && typeof data.longitude === "number") {
         setDriverLocation({ lat: data.latitude, lng: data.longitude });
       }
     };
@@ -196,6 +198,32 @@ export default function TrackOrderPage({
     order.status?.toLowerCase() === "out of delivery" ||
     order.status?.toLowerCase() === "out_of_delivery";
 
+  const isCannotBeDelivered =
+    order.status?.toLowerCase() === "cannot be delivered" ||
+    order.status?.toLowerCase() === "cannot_be_delivered";
+
+  if (isCannotBeDelivered) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center text-rose-600 mb-4 border border-rose-200 shadow-xs">
+          <Package size={32} />
+        </div>
+        <h2 className="text-xl font-extrabold text-slate-900 mb-2">
+          Order Cannot be Delivered
+        </h2>
+        <p className="text-slate-500 text-sm mb-6 max-w-md leading-relaxed">
+          We apologize! No delivery partner is currently available within your location radius (10 km) to fulfill this shipment.
+        </p>
+        <button
+          onClick={() => router.push("/user/my-orders")}
+          className="px-6 py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-2xl shadow-md cursor-pointer transition-all"
+        >
+          Back to My Orders
+        </button>
+      </div>
+    );
+  }
+
   if (!isOutOfDelivery) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 text-center">
@@ -207,7 +235,7 @@ export default function TrackOrderPage({
         </h2>
         <p className="text-slate-500 text-sm mb-6 max-w-md leading-relaxed">
           Live tracking is only accessible when your order is{" "}
-          <strong className="text-emerald-700 font-bold">Out for Delivery</strong>.
+          <strong className="text-emerald-700 font-bold">Out for Delivery</strong> and accepted by a delivery partner.
           <br />
           Current Order Status:{" "}
           <span className="capitalize font-extrabold text-slate-800">
@@ -224,15 +252,39 @@ export default function TrackOrderPage({
     );
   }
 
+  if (!order.assignedDeliveryBoy) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-700 mb-4 border border-emerald-200 shadow-xs">
+          <Truck size={32} className="animate-bounce" />
+        </div>
+        <h2 className="text-xl font-extrabold text-slate-900 mb-2">
+          Waiting for Delivery Partner Acceptance
+        </h2>
+        <p className="text-slate-500 text-sm mb-6 max-w-md leading-relaxed">
+          Your order is broadcasted to nearby delivery partners.
+          <br />
+          Live GPS tracking map will automatically activate as soon as a partner accepts your order task!
+        </p>
+        <button
+          onClick={() => router.push("/user/my-orders")}
+          className="px-6 py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-2xl shadow-md cursor-pointer transition-all"
+        >
+          Back to My Orders
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-[92%] md:w-[80%] max-w-4xl mx-auto pt-20 sm:pt-24 pb-8 min-h-[85vh] space-y-6">
+    <div className="w-[95%] sm:w-[90%] md:w-[85%] max-w-4xl mx-auto pt-28 pb-8 min-h-[85vh] space-y-6">
       {/* Top Header */}
       <div className="flex items-center justify-between gap-4">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-emerald-700 hover:text-emerald-800 font-bold text-sm cursor-pointer transition-colors"
+          className="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-semibold transition-all group bg-white px-4 py-2 rounded-full shadow-xs hover:shadow-sm border border-slate-100/50 cursor-pointer"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={18} className="transition-transform group-hover:-translate-x-1" />
           <span>Back to My Orders</span>
         </button>
 
@@ -337,6 +389,30 @@ export default function TrackOrderPage({
             </p>
           </div>
         </div>
+
+        {/* Delivery Verification OTP Badge for Customer */}
+        {order.deliveryOtp && isOutOfDelivery && (
+          <div className="relative z-10 pt-4 border-t border-white/15">
+            <div className="bg-amber-500/20 border border-amber-300/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-white backdrop-blur-md">
+              <div className="flex items-center gap-3 text-left">
+                <div className="w-10 h-10 rounded-xl bg-amber-400 text-amber-950 flex items-center justify-center font-bold shrink-0 shadow-xs">
+                  <Key size={20} />
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-amber-200 uppercase tracking-wider">
+                    Delivery Verification OTP
+                  </p>
+                  <p className="text-xs text-amber-100 font-medium">
+                    Share this 6-digit PIN with your delivery partner upon arrival:
+                  </p>
+                </div>
+              </div>
+              <div className="px-4 py-2 bg-white text-amber-900 font-mono font-black text-2xl tracking-widest rounded-xl shadow-md shrink-0">
+                {order.deliveryOtp}
+              </div>
+            </div>
+          </div>
+        )}
       </motion.div>
 
       {/* Interactive OpenStreetMap Live Map (Only displayed when order is Out for Delivery) */}
@@ -411,6 +487,15 @@ export default function TrackOrderPage({
                   <span>Call {order.assignedDeliveryBoy.name}</span>
                 </a>
               )}
+
+              <button
+                type="button"
+                onClick={() => setShowChatModal(true)}
+                className="w-full py-3 bg-teal-700 hover:bg-teal-800 active:scale-95 text-white font-bold text-xs rounded-2xl shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <MessageSquare size={15} />
+                <span>Chat Live with Partner</span>
+              </button>
 
               {driverLocation && (
                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-1">
@@ -521,6 +606,22 @@ export default function TrackOrderPage({
           ))}
         </div>
       </motion.div>
+
+      {/* Live Chat Modal Drawer */}
+      <AnimatePresence>
+        {showChatModal && order && order.assignedDeliveryBoy && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <DeliveryChat
+              orderId={order._id}
+              userId={typeof order.user === "object" ? order.user._id : String(order.user || "")}
+              deliveryBoyId={order.assignedDeliveryBoy._id}
+              currentUserId={typeof order.user === "object" ? order.user._id : String(order.user || "")}
+              recipientName={order.assignedDeliveryBoy.name || "Delivery Partner"}
+              onClose={() => setShowChatModal(false)}
+            />
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

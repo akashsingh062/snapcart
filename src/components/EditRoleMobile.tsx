@@ -42,8 +42,7 @@ const EditRoleMobile = () => {
     try {
       const res = await axios.get("/api/auth/check-for-admin");
       return res.data.success;
-    } catch (error) {
-      console.error("Failed to check for admin:", error);
+    } catch {
       return false;
     }
   };
@@ -83,9 +82,8 @@ const EditRoleMobile = () => {
       } else {
         router.refresh();
       }
-    } catch (err) {
-      console.error("Profile update error:", err);
-      setError("An unexpected error occurred. Please try again.");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }

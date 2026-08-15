@@ -20,7 +20,6 @@ const uploadOnCloudnary = async (file: Blob): Promise<string | null> => {
         },
         (error, result) => {
           if (error) {
-            console.log(error);
             resolve(null);
           } else {
             resolve(result?.secure_url || null);
@@ -29,8 +28,7 @@ const uploadOnCloudnary = async (file: Blob): Promise<string | null> => {
       );
       uploadStream.end(buffer);
     });
-  } catch (error) {
-    console.error("Cloudinary upload error:", error);
+  } catch {
     return null;
   }
 };

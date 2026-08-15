@@ -55,9 +55,6 @@ const RegisterForm = ({ previousStep }: propType) => {
           callbackURL: callbackUrl,
         },
         {
-          onRequest: (ctx: unknown) => {
-            console.log("Making request...", ctx);
-          },
           onSuccess: () => {
             router.push(callbackUrl);
             router.refresh();
@@ -92,8 +89,8 @@ const RegisterForm = ({ previousStep }: propType) => {
         provider: "google",
         callbackURL: callbackUrl,
       });
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setError("Failed to sign up with Google. Please try again.");
     }
   };
 

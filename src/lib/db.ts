@@ -2,13 +2,14 @@ import mongoose from "mongoose";
 
 const mongodbUrl = process.env.MONGODB_URL;
 if (!mongodbUrl) {
-  throw new Error("Please provide a mongodb url");
+  throw new Error("MONGODB_URL environment variable is not defined");
 }
 
 let cached = global.mongoose;
 if (!cached) {
   cached = global.mongoose = { conn: null, promise: null };
 }
+
 const connectdb = async () => {
   if (cached.conn) {
     return cached.conn;
@@ -22,7 +23,9 @@ const connectdb = async () => {
     const conn = await cached.promise;
     return conn;
   } catch (error) {
-    console.log(error);
+    cached.promise = null;
+    throw error;
   }
 };
-export default connectdb
+
+export default connectdb;
